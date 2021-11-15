@@ -1,15 +1,10 @@
 import sqlparse as sqlp
 
+# token recognizing
 def isWhitespace(token):
     return token.ttype == sqlp.tokens.Text.Whitespace
 
-def skipWhitespaces(i, tokens):
-    j = i + 1
-    while isWhitespace(tokens[j]):
-        j += 1
-    return j
-
-def isSelect(token):
+def isSelectKeyword(token):
     return (token.ttype == sqlp.tokens.Keyword.DML
         and token._get_repr_value() == 'SELECT')
 
@@ -19,10 +14,13 @@ def isIdentifier(token):
 def isIdentifierList(token):
     return isinstance(token, sqlp.sql.IdentifierList)
 
+def isComparison(token):
+    return isinstance(token, sqlp.sql.Comparison)
+
 def isWildcard(token):
     return token.ttype == sqlp.tokens.Wildcard
 
-def isFrom(token):
+def isFromKeyword(token):
     return (token.ttype == sqlp.tokens.Keyword
         and token._get_repr_value() == 'FROM')
 
@@ -33,19 +31,15 @@ def isWhereKeyword(token):
     return (token.ttype == sqlp.tokens.Keyword
         and token._get_repr_value() == 'WHERE')
 
-def getNamesFromId(identifier):
-    if isinstance(identifier, sqlp.sql.TokenList):
-        return [i._get_repr_value() for i in identifier.tokens 
-            if i.ttype == sqlp.tokens.Name]
-    else:
-        return [identifier._get_repr_value()]
+def isTokenList(token):
+    return isinstance(token, sqlp.sql.TokenList)
 
-def getNamesFromIdList(identifierList):
-    return [name for i in identifierList.get_identifiers()
-        for name in getNamesFromId(i)]
-
-def isComparison(token):
-    return isinstance(token, sqlp.sql.Comparison)
+# skipping and finding
+def skipWhitespaces(i, tokens):
+    j = i + 1
+    while isWhitespace(tokens[j]):
+        j += 1
+    return j
 
 def findComparisons(i, tokens):
         j = i + 1
@@ -58,3 +52,16 @@ def findIdentifiers(i, tokens):
         while j < len(tokens) and not isIdentifier(tokens[j]):
             j += 1
         return j
+
+
+# getting names
+def getNamesFromId(identifier):
+    if isTokenList(identifier):
+        return [i._get_repr_value() for i in identifier.tokens 
+            if i.ttype == sqlp.tokens.Name]
+    else:
+        return [identifier._get_repr_value()]
+
+def getNamesFromIdList(identifierList):
+    return [name for i in identifierList.get_identifiers()
+        for name in getNamesFromId(i)]

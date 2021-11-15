@@ -1,11 +1,10 @@
-import sqlparse as sqlp
 import algebra as ra
 import tokentools as tt
 
 def evaluateStatement(tokens):
     # SELECT
     i = tt.skipWhitespaces(-1, tokens)
-    if not tt.isSelect(tokens[i]):
+    if not tt.isSelectKeyword(tokens[i]):
         return -1 
 
     # FIELDS
@@ -21,7 +20,7 @@ def evaluateStatement(tokens):
     
     # FROM
     i = tt.skipWhitespaces(i, tokens)
-    if not tt.isFrom(tokens[i]):
+    if not tt.isFromKeyword(tokens[i]):
         return -1 
     
     # TABLES
@@ -40,7 +39,8 @@ def evaluateStatement(tokens):
     else:
         return -1
 
-    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProduct(tables)))
+    renames = dict()
+    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProduct(tables, renames)))
     
 def evaluateWhere(tokens):
     predicates = []

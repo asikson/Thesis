@@ -3,8 +3,8 @@
 class Projection:
     def __init__(self, fields, selection):
         self.fields = fields
-        self.selection = selection
         self.wildcard = (len(fields) == 0)
+        self.selection = selection
 
     def toString(self):
         result = "\project: "
@@ -26,8 +26,9 @@ class Selection:
             "} \n" + self.data.toString()
 
 class CrossProduct:
-    def __init__(self, tables):
+    def __init__(self, tables, renames):
         self.tables = tables
+        self.renames = renames
     
     def toString(self):
         return "(" + " x ".join(self.tables) + ")"
