@@ -10,6 +10,8 @@ sql = 'select p.name, p.surname \
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
 
-statement._pprint_tree()
-result = ev.evaluateStatement(statement.tokens)
-#print(result.toString())
+#statement._pprint_tree()
+result, renames = ev.evaluateStatement(statement.tokens)
+print(result.toString())
+for r in renames:
+    print(r.toString())

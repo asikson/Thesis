@@ -26,11 +26,16 @@ def evaluateStatement(tokens):
     # TABLES
     i = tt.skipWhitespaces(i, tokens) 
     if tt.isIdentifier(tokens[i]): 
-        tables = tt.getNamesFromId(tokens[i])
+        pairs = tt.getTablesFromId(tokens[i])
     elif tt.isIdentifierList(tokens[i]):
-        tables = tt.getNamesFromIdList(tokens[i])
+        pairs = tt.getTablesFromIdList(tokens[i])
     else:
         return -1
+
+    tables = [p[0] for p in pairs]
+    renames = []
+    for p in pairs:
+        renames.append(ra.Rename(p[1], p[0]))
 
     # WHERE
     i = tt.skipWhitespaces(i, tokens) 
@@ -39,8 +44,7 @@ def evaluateStatement(tokens):
     else:
         return -1
 
-    renames = dict()
-    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProduct(tables, renames)))
+    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProduct(tables))), renames
     
 def evaluateWhere(tokens):
     predicates = []

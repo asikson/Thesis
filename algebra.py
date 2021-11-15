@@ -26,17 +26,19 @@ class Selection:
             "} \n" + self.data.toString()
 
 class CrossProduct:
-    def __init__(self, tables, renames):
+    def __init__(self, tables):
         self.tables = tables
-        self.renames = renames
     
     def toString(self):
-        return "(" + " x ".join(self.tables) + ")"
+        return "(" + str(self.tables).strip('[]') + ")"
 
 class Rename:
     def __init__(self, alias, table):
         self.alias = alias
         self.table = table
+
+    def toString(self):
+        return "\\rename " + self.alias + " {" + self.table + "}"
 
 class Predicate:
     def __init__(self, table1, field1, table2, field2, value):
