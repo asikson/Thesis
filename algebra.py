@@ -6,53 +6,51 @@ class Projection:
         self.wildcard = (len(fields) == 0)
         self.selection = selection
 
-    def toString(self):
-        result = "\project: "
+    def __str__(self):
+        result = "PROJECT: "
         if self.wildcard:
             result += "[*] "
         else: 
             result += str(self.fields)
 
-        return result + "\n" + self.selection.toString()
+        return result + "\n" + self.selection.__str__()
 
 class Selection:
     def __init__(self, predicates, data):
         self.predicates = predicates
         self.data = data
 
-    def toString(self):
-        return "\select {" +\
-            ", ".join(map(lambda p: p.toString(), self.predicates)) +\
-            "} \n" + self.data.toString()
+    def __str__(self):
+        return "SELECT {" +\
+            ", ".join(map(lambda p: p.__str__(), self.predicates)) +\
+            "} \n" + self.data.__str__()
 
 class CrossProduct:
     def __init__(self, tables):
         self.tables = tables
     
-    def toString(self):
-        return "(" + str(self.tables).strip('[]') + ")"
+    def __str__(self):
+        return "CROSS:" + str(self.tables)
 
 class Rename:
     def __init__(self, alias, table):
         self.alias = alias
         self.table = table
 
-    def toString(self):
-        return "\\rename " + self.alias + " {" + self.table + "}"
+    def __str__(self):
+        return "RENAME " + self.alias + " [" + self.table + "]"
 
 class Predicate:
-    def __init__(self, table1, field1, table2, field2, value):
-        self.table1 = table1
-        self.field1 = field1
-        self.table2 = table2
-        self.field2 = field2
-        self.value = value
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
 
-    def toString(self):
-        result = self.table1 + "." + self.field1 + " = "
-        if self.value is None:
-            result += self.table2 + "." + self.field2
-        else:
-            result += self.value
-        
-        return result
+    def __str__(self):
+        return str(self.left) + " = " + str(self.right)
+
+class Join:
+    def __init__(self, table1, table2, field1, field2):
+        self.table1 = table1
+        self.table2 = table2
+        self.field1 = field1
+        self.field2 = field2

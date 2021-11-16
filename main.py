@@ -12,6 +12,6 @@ statement = sqlp.parse(formatted)[0]
 
 #statement._pprint_tree()
 result, renames = ev.evaluateStatement(statement.tokens)
-print(result.toString())
+print(result)
 for r in renames:
-    print(r.toString())
+    print(r)

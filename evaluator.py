@@ -52,7 +52,6 @@ def evaluateWhere(tokens):
     if not tt.isWhereKeyword(tokens[i]):
         return -1
 
-    # evaluate comparisons
     i = tt.findComparisons(i, tokens)
     while i < len(tokens):
         predicates.append(evaluateComparison(tokens[i].tokens))
@@ -62,24 +61,9 @@ def evaluateWhere(tokens):
 
 def evaluateComparison(tokens):
     i = tt.findIdentifiers(-1, tokens)
-    names1 = tt.getNamesFromId(tokens[i])
-    if len(names1) != 2:
-        return -1
-    else:
-        table1 = names1[0]
-        field1 = names1[1]
+    left = tt.getNamesFromId(tokens[i])
     
     i = tt.findIdentifiers(i, tokens)
-    names2 = tt.getNamesFromId(tokens[i])
-    if len(names2) == 1:
-        value = names2[0]
-        table2 = None
-        field2 = None
-    elif len(names2) == 2:
-        table2 = names2[0]
-        field2 = names2[1]
-        value = None
-    else:
-        return -1
+    right = tt.getNamesFromId(tokens[i])
 
-    return ra.Predicate(table1, field1, table2, field2, value)
+    return ra.Predicate(left, right)
