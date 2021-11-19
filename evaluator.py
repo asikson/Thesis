@@ -17,6 +17,8 @@ def evaluateStatement(tokens):
         fields = []
     else:
         return -1 
+
+    fields = list(map(lambda f: ra.Field(f[1], f[0]), fields))
     
     # FROM
     i = tt.skipWhitespaces(i, tokens)
@@ -26,16 +28,13 @@ def evaluateStatement(tokens):
     # TABLES
     i = tt.skipWhitespaces(i, tokens) 
     if tt.isIdentifier(tokens[i]): 
-        pairs = tt.getTablesFromId(tokens[i])
+        tables = tt.getTablesFromId(tokens[i])
     elif tt.isIdentifierList(tokens[i]):
-        pairs = tt.getTablesFromIdList(tokens[i])
+        tables = tt.getTablesFromIdList(tokens[i])
     else:
         return -1
 
-    tables = [p[0] for p in pairs]
-    renames = []
-    for p in pairs:
-        renames.append(ra.Rename(p[1], p[0]))
+    tables = list(map(lambda t: ra.Table(t[0], t[1]), tables))
 
     # WHERE
     i = tt.skipWhitespaces(i, tokens) 
@@ -44,7 +43,7 @@ def evaluateStatement(tokens):
     else:
         return -1
 
-    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProduct(tables))), renames
+    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProductList(tables)))
     
 def evaluateWhere(tokens):
     predicates = []
@@ -62,8 +61,13 @@ def evaluateWhere(tokens):
 def evaluateComparison(tokens):
     i = tt.findIdentifiers(-1, tokens)
     left = tt.getNamesFromId(tokens[i])
+    left = ra.Field(left[1], left[0])
     
     i = tt.findIdentifiers(i, tokens)
     right = tt.getNamesFromId(tokens[i])
+    if len(right) == 1:
+        right = right[0]
+    else:
+        right = ra.Field(right[1], right[0])
 
     return ra.Predicate(left, right)

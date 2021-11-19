@@ -9,9 +9,9 @@ class Projection:
     def __str__(self):
         result = "PROJECT: "
         if self.wildcard:
-            result += "[*] "
+            result += "* "
         else: 
-            result += str(self.fields)
+            result += ", ".join(map(str, self.fields))
 
         return result + "\n" + self.selection.__str__()
 
@@ -25,32 +25,62 @@ class Selection:
             ", ".join(map(lambda p: p.__str__(), self.predicates)) +\
             "} \n" + self.data.__str__()
 
-class CrossProduct:
-    def __init__(self, tables):
-        self.tables = tables
-    
-    def __str__(self):
-        return "CROSS:" + str(self.tables)
-
-class Rename:
-    def __init__(self, alias, table):
-        self.alias = alias
-        self.table = table
-
-    def __str__(self):
-        return "RENAME " + self.alias + " [" + self.table + "]"
-
 class Predicate:
     def __init__(self, left, right):
         self.left = left
         self.right = right
+        self.withValue = not isinstance(right, Field)
 
     def __str__(self):
-        return str(self.left) + " = " + str(self.right)
+        result = self.left.__str__() + " = "
+        if self.withValue:
+            result += "'" + self.right + "'"
+        else:
+            result += self.right.__str__()
+
+        return result     
+
+class CrossProductList:
+    def __init__(self, tables):
+        self.tables = tables
+    
+    def __str__(self):
+        return "CROSS LIST: " + " x ".join(map(str, self.tables))
 
 class Join:
-    def __init__(self, table1, table2, field1, field2):
-        self.table1 = table1
-        self.table2 = table2
-        self.field1 = field1
-        self.field2 = field2
+    def __init__(self, table_1, table_2, fieldName_1, fieldName_2):
+        self.table_1 = table_1
+        self.table_2 = table_2
+        self.fieldName_1 = fieldName_1
+        self.fieldName_2 = fieldName_2
+
+    def __str__(self):
+        return self.table_1.name +  " JOIN " +\
+            self.table_2.name + " ON " +\
+            self.table_1.alias + "." + self.fieldName_1 + " = " +\
+            self.table_2.alias + "." + self.fieldName_2
+
+class CrossProduct:
+    def __init__(self, table_1, table_2):
+        self.table_1 = table_1
+        self.table_2 = table_2
+
+    def __str__(self):
+        return "CROSS: " + self.table_1.name +\
+            " X " + self.table_2.name
+
+class Table:
+    def __init__(self, name, alias):
+        self.name = name
+        self.alias = alias
+    
+    def __str__(self):
+        return "TABLE: " + self.name + " (" + self.alias + ")"
+
+class Field:
+    def __init__(self, name, tablename):
+        self.name = name
+        self.tablename = tablename
+
+    def __str__(self):
+        return "FIELD: " + self.tablename + "." + self.name
