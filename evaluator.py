@@ -38,6 +38,8 @@ def evaluateStatement(tokens):
 
     # WHERE
     i = tt.skipWhitespaces(i, tokens) 
+    if i == len(tokens):
+        return ra.Projection(fields, ra.CrossProductList(tables))
     if tt.isWhere(tokens[i]):
         predicates = evaluateWhere(tokens[i].tokens)
     else:

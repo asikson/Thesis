@@ -37,19 +37,22 @@ def isTokenList(token):
 # skipping and finding
 def skipWhitespaces(i, tokens):
     j = i + 1
-    while isWhitespace(tokens[j]):
+    while (j < len(tokens)
+        and isWhitespace(tokens[j])):
         j += 1
     return j
 
 def findComparisons(i, tokens):
     j = i + 1
-    while j < len(tokens) and not isComparison(tokens[j]):
+    while (j < len(tokens) 
+        and not isComparison(tokens[j])):
         j += 1
     return j
 
 def findIdentifiers(i, tokens):
     j = i + 1
-    while j < len(tokens) and not isIdentifier(tokens[j]):
+    while (j < len(tokens) 
+        and not isIdentifier(tokens[j])):
         j += 1
     return j
 

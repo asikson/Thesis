@@ -1,10 +1,10 @@
-# klasy do algebry relacji
+# returned by evaluator
 
 class Projection:
-    def __init__(self, fields, selection):
+    def __init__(self, fields, dataset):
         self.fields = fields
         self.wildcard = (len(fields) == 0)
-        self.selection = selection
+        self.dataset = dataset
 
     def __str__(self):
         result = "PROJECT: "
@@ -13,17 +13,27 @@ class Projection:
         else: 
             result += ", ".join(map(str, self.fields))
 
-        return result + "\n" + self.selection.__str__()
+        return result + "\n" + self.dataset.__str__()
 
 class Selection:
-    def __init__(self, predicates, data):
+    def __init__(self, predicates, dataset):
         self.predicates = predicates
-        self.data = data
+        self.dataset = dataset
 
     def __str__(self):
         return "SELECT {" +\
-            ", ".join(map(lambda p: p.__str__(), self.predicates)) +\
-            "} \n" + self.data.__str__()
+            ", ".join(map(str, self.predicates)) +\
+            "} \n" + self.dataset.__str__()
+
+class CrossProductList:
+    def __init__(self, tables):
+        self.tables = tables
+    
+    def __str__(self):
+        return "CROSS LIST: " + " x ".join(map(str, self.tables))
+
+
+# auxiliary
 
 class Predicate:
     def __init__(self, left, right):
@@ -38,14 +48,26 @@ class Predicate:
         else:
             result += self.right.__str__()
 
-        return result     
+        return result
 
-class CrossProductList:
-    def __init__(self, tables):
-        self.tables = tables
+class Table:
+    def __init__(self, name, alias):
+        self.name = name
+        self.alias = alias
     
     def __str__(self):
-        return "CROSS LIST: " + " x ".join(map(str, self.tables))
+        return "TABLE: " + self.name + " (" + self.alias + ")"
+
+class Field:
+    def __init__(self, name, tablename):
+        self.name = name
+        self.tablename = tablename
+
+    def __str__(self):
+        return "FIELD: " + self.tablename + "." + self.name
+
+
+# datasets
 
 class Join:
     def __init__(self, table_1, table_2, fieldName_1, fieldName_2):
@@ -68,19 +90,3 @@ class CrossProduct:
     def __str__(self):
         return "CROSS: " + self.table_1.name +\
             " X " + self.table_2.name
-
-class Table:
-    def __init__(self, name, alias):
-        self.name = name
-        self.alias = alias
-    
-    def __str__(self):
-        return "TABLE: " + self.name + " (" + self.alias + ")"
-
-class Field:
-    def __init__(self, name, tablename):
-        self.name = name
-        self.tablename = tablename
-
-    def __str__(self):
-        return "FIELD: " + self.tablename + "." + self.name
