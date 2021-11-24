@@ -1,4 +1,4 @@
-tables = dict()
+import datasets as ds
 
 class Table:
     def __init__(self, name, pk, columns):
@@ -29,33 +29,41 @@ class Record:
     def __str__(self):
         return self.pk + " -> ".join(self.values)
 
-def addTable(tablename, pk, columns):
-    global tables
-    tables[tablename] = Table(tablename, pk, columns)
+class myDatabase:
+    def __init__(self):
+        self.tables = dict()
+        self.tableNames = []
 
-def printTable(tablename):
-    print(tables[tablename])
+    def addTable(self, tablename, pk, columns):
+        self.tables[tablename] = Table(tablename, pk, columns)
+        self.tableNames.append(tablename)
+    
+    def printTable(self, tablename):
+        print(self.tables[tablename])
 
-def addRecord(tablename, record):
-    if tablename not in tables.keys():
-        print("No such table")
-    else:
-        tables[tablename].addRecord(record)
+    def addRecord(self, tablename, record):
+        if tablename not in self.tableNames:
+            print("No such table")
+        else:
+            self.tables[tablename].addRecord(record)
 
+    def getTable(self, tablename):
+        return self.tables[tablename]
+
+
+db = myDatabase()
 
 # PEOPLE
-addTable("people", "id", ["name", "surname", "city"])
+db.addTable("people", "id", ["name", "surname", "city"])
 
-addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
-addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
-addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
+db.addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
+db.addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
+db.addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
 
 # CITIES
-addTable("cities", "id", ["name"])
+db.addTable("cities", "id", ["name"])
 
-addRecord("cities", Record(1, ["Wrocław"]))
-addRecord("cities", Record(2, ["Warszawa"]))
+db.addRecord("cities", Record(1, ["Wrocław"]))
+db.addRecord("cities", Record(2, ["Warszawa"]))
 
-
-printTable("people")
-printTable("cities")
+print(ds.Dataset(db.getTable('people')))
