@@ -11,5 +11,5 @@ formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
 
 #statement._pprint_tree()
-result = ev.evaluateStatement(statement.tokens)
-print(result)
+output = ev.evaluateStatement(statement.tokens)
+print(output)

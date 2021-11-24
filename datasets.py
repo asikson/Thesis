@@ -18,7 +18,6 @@ class Dataset:
     def __str__(self):
         return '\n'.join(map(str, self.rows))
 
-
 class Row:
     def __init__(self, tablename, record):
         self.values = dict()
@@ -27,7 +26,6 @@ class Row:
     
     def __str__(self):
         return ' '.join(map(str, self.values.items()))
-
 
 class Operator:
     def __init__(self, dataset):

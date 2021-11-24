@@ -59,11 +59,10 @@ db.addTable("people", "id", ["name", "surname", "city"])
 db.addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
 db.addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
 db.addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
+db.addRecord("people", Record(4, ["Przemysław", "Kolanek", 2]))
 
 # CITIES
 db.addTable("cities", "id", ["name"])
 
 db.addRecord("cities", Record(1, ["Wrocław"]))
 db.addRecord("cities", Record(2, ["Warszawa"]))
-
-print(ds.Dataset(db.getTable('people')))

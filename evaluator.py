@@ -39,13 +39,13 @@ def evaluateStatement(tokens):
     # WHERE
     i = tt.skipWhitespaces(i, tokens) 
     if i == len(tokens):
-        return ra.Projection(fields, ra.CrossProductList(tables))
+        ra.evaluatorOutput(fields, [], tables)
     if tt.isWhere(tokens[i]):
         predicates = evaluateWhere(tokens[i].tokens)
     else:
         return -1
 
-    return ra.Projection(fields, ra.Selection(predicates, ra.CrossProductList(tables)))
+    return ra.evaluatorOutput(fields, predicates, tables)
     
 def evaluateWhere(tokens):
     predicates = []

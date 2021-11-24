@@ -1,0 +1,2 @@
+def naivePlan(output):
+    
