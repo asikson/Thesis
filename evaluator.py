@@ -1,4 +1,4 @@
-import algebra as ra
+import output as out
 import tokentools as tt
 
 def evaluateStatement(tokens):
@@ -18,7 +18,7 @@ def evaluateStatement(tokens):
     else:
         return -1 
 
-    fields = list(map(lambda f: ra.Field(f[1], f[0]), fields))
+    fields = list(map(lambda f: out.Field(f[1], f[0]), fields))
     
     # FROM
     i = tt.skipWhitespaces(i, tokens)
@@ -34,18 +34,19 @@ def evaluateStatement(tokens):
     else:
         return -1
 
-    tables = list(map(lambda t: ra.Table(t[0], t[1]), tables))
+    tables = list(map(lambda t: out.Table(t[0], t[1]) if len(t) > 1
+                                else out.Table(t[0], t[0]), tables))
 
     # WHERE
     i = tt.skipWhitespaces(i, tokens) 
     if i == len(tokens):
-        ra.evaluatorOutput(fields, [], tables)
+        out.evaluatorOutput(fields, [], tables)
     if tt.isWhere(tokens[i]):
         predicates = evaluateWhere(tokens[i].tokens)
     else:
         return -1
 
-    return ra.evaluatorOutput(fields, predicates, tables)
+    return out.evaluatorOutput(fields, predicates, tables)
     
 def evaluateWhere(tokens):
     predicates = []
@@ -63,13 +64,13 @@ def evaluateWhere(tokens):
 def evaluateComparison(tokens):
     i = tt.findIdentifiers(-1, tokens)
     left = tt.getNamesFromId(tokens[i])
-    left = ra.Field(left[1], left[0])
+    left = out.Field(left[1], left[0])
     
     i = tt.findIdentifiers(i, tokens)
     right = tt.getNamesFromId(tokens[i])
     if len(right) == 1:
         right = right[0]
     else:
-        right = ra.Field(right[1], right[0])
+        right = out.Field(right[1], right[0])
 
-    return ra.Predicate(left, right)
+    return out.Predicate(left, right)

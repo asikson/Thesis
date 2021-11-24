@@ -50,19 +50,21 @@ class myDatabase:
     def getTable(self, tablename):
         return self.tables[tablename]
 
+def createDatabase():
+    db = myDatabase()
 
-db = myDatabase()
+    # PEOPLE
+    db.addTable("people", "id", ["name", "surname", "city"])
 
-# PEOPLE
-db.addTable("people", "id", ["name", "surname", "city"])
+    db.addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
+    db.addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
+    db.addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
+    db.addRecord("people", Record(4, ["Przemysław", "Kolanek", 2]))
 
-db.addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
-db.addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
-db.addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
-db.addRecord("people", Record(4, ["Przemysław", "Kolanek", 2]))
+    # CITIES
+    db.addTable("cities", "id", ["name"])
 
-# CITIES
-db.addTable("cities", "id", ["name"])
+    db.addRecord("cities", Record(1, ["Wrocław"]))
+    db.addRecord("cities", Record(2, ["Warszawa"]))
 
-db.addRecord("cities", Record(1, ["Wrocław"]))
-db.addRecord("cities", Record(2, ["Warszawa"]))
+    return db

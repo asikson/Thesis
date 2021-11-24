@@ -1,50 +1,3 @@
-# output
-
-class Predicate:
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-        self.withValue = not isinstance(right, Field)
-
-    def __str__(self):
-        result = self.left.__str__() + " = "
-        if self.withValue:
-            result += "'" + self.right + "'"
-        else:
-            result += self.right.__str__()
-
-        return result
-
-class Table:
-    def __init__(self, name, alias):
-        self.name = name
-        self.alias = alias
-    
-    def __str__(self):
-        return self.name + " (" + self.alias + ")"
-
-class Field:
-    def __init__(self, name, tablename):
-        self.name = name
-        self.tablename = tablename
-
-    def __str__(self):
-        return self.tablename + "." + self.name
-
-class evaluatorOutput:
-    def __init__(self, fields, predicates, tables):
-        self.fields = fields
-        self.predicates = predicates
-        self.tables = tables
-
-    def __str__(self):
-        return "FIELDS: " + ', '.join(map(str, self.fields)) + "\n" \
-            + "PREDICATES: " + ', '.join(map(str, self.predicates)) + "\n" \
-            + "TABLES: " + ', '.join(map(str, self.tables))
-
-
-# algebra
-
 class Projection:
     def __init__(self, fields, dataset):
         self.fields = fields
@@ -66,28 +19,22 @@ class Selection:
         self.dataset = dataset
 
     def __str__(self):
-        return "SELECT {" +\
+        return "SELECT: " +\
             ", ".join(map(str, self.predicates)) +\
-            "} \n" + self.dataset.__str__()
+            "\n" + self.dataset.__str__()
 
 class Join:
-    def __init__(self, table_1, table_2, fieldName_1, fieldName_2):
-        self.table_1 = table_1
-        self.table_2 = table_2
-        self.fieldName_1 = fieldName_1
-        self.fieldName_2 = fieldName_2
-
-    def __str__(self):
-        return self.table_1.name +  " JOIN " +\
-            self.table_2.name + " ON " +\
-            self.table_1.alias + "." + self.fieldName_1 + " = " +\
-            self.table_2.alias + "." + self.fieldName_2
+    def __init__(self, dataset_1, dataset_2, field_1, field_2):
+        self.dataset_1 = dataset_1
+        self.dataset_2 = dataset_2
+        self.field_1 = field_1
+        self.field_2 = field_2
 
 class CrossProduct:
-    def __init__(self, table_1, table_2):
-        self.table_1 = table_1
-        self.table_2 = table_2
+    def __init__(self, dataset_1, dataset_2):
+        self.dataset_1 = dataset_1
+        self.dataset_2 = dataset_2
 
-    def __str__(self):
-        return "CROSS: " + self.table_1.name +\
-            " X " + self.table_2.name
+class Read:
+    def __init__(self, dataset):
+        self.dataset = dataset

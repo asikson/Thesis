@@ -1,12 +1,13 @@
 class Dataset:
-    def __init__(self, table):
+    def __init__(self, table, alias):
         self.size = len(table.data)
-        self.rows = [Row(table.name, rec) 
+        self.rows = [Row(alias, rec) 
             for pk, rec in table.data.items()]
-
+    '''
     def __init__(self):
         self.size = 0
         self.rows = []
+    '''
 
     def addRow(self, row):
         self.rows.append(row)
