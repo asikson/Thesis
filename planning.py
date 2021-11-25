@@ -17,5 +17,8 @@ def naivePlan(output, database):
 
     return ra.Projection(fields, ra.Selection(predicates, outerDataset))
 
+def executePlan(plan):
+    return plan.execute()
+
 def makeDatasets(tables, database):
     return [ds.Dataset(database.getTable(t.name), t.alias) for t in tables]

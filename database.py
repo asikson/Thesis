@@ -59,12 +59,13 @@ def createDatabase():
     db.addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
     db.addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
     db.addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
-    db.addRecord("people", Record(4, ["Przemysław", "Kolanek", 2]))
+    #db.addRecord("people", Record(4, ["Przemysław", "Kolanek", 2]))
 
     # CITIES
-    db.addTable("cities", "id", ["name"])
+    db.addTable("cities", "pk", ["id", "name"])
 
-    db.addRecord("cities", Record(1, ["Wrocław"]))
-    db.addRecord("cities", Record(2, ["Warszawa"]))
+    db.addRecord("cities", Record(1, [1, "Wrocław"]))
+    db.addRecord("cities", Record(2, [2, "Warszawa"]))
+    db.addRecord("cities", Record(3, [3, "Kraków"]))
 
     return db
