@@ -1,9 +1,9 @@
-import datasets as ds
+from random import randrange
 
 class Table:
-    def __init__(self, name, pk, columns):
+    def __init__(self, name, pk_name, columns):
         self.name = name
-        self.pk = pk
+        self.pk_name = pk_name
         self.columns = columns
         self.data = dict()
 
@@ -53,19 +53,28 @@ class myDatabase:
 def createDatabase():
     db = myDatabase()
 
-    # PEOPLE
-    db.addTable("people", "id", ["name", "surname", "city"])
-
-    db.addRecord("people", Record(1, ["Joanna", "Mielniczuk", 1]))
-    db.addRecord("people", Record(2, ["Marianna", "Kabata", 2]))
-    db.addRecord("people", Record(3, ["Olga", "Sokołowska", 2]))
-    #db.addRecord("people", Record(4, ["Przemysław", "Kolanek", 2]))
+    names = ['Joanna', 'Marianna', 'Olga', 'Alicja', 
+        'Przemysław', 'Artur', 'Antoni', 'Mateusz']
+    surnames = ['Nowak', 'Storczyk', 'Kabata', 'Pisarczuk',
+        'Kowalczyk', 'Wlazły', 'Maj', 'Kołodziejczyk']
+    cities = ['Wrocław', 'Warszawa', 'Kraków', 'Zakopane']
 
     # CITIES
-    db.addTable("cities", "pk", ["id", "name"])
+    db.addTable("cities", "id", ["id", "name"])
+    i = 1
+    for c in cities:
+        db.addRecord("cities", Record(i, [i, c]))
+        i += 1
 
-    db.addRecord("cities", Record(1, [1, "Wrocław"]))
-    db.addRecord("cities", Record(2, [2, "Warszawa"]))
-    db.addRecord("cities", Record(3, [3, "Kraków"]))
+    # PEOPLE
+    numberOfPeople = 100
+    db.addTable("people", "id", ["id", "name", "surname", "city", "age"])
+    for i in range(numberOfPeople):
+        n = names[randrange(len(names))]
+        s = surnames[randrange(len(surnames))]
+        c = randrange(len(cities)) + 1
+        a = randrange(10) + 20
+
+        db.addRecord("people", Record(i + 1, [i + 1, n, s, c, a]))
 
     return db

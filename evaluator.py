@@ -10,7 +10,7 @@ def evaluateStatement(tokens):
     # FIELDS
     i = tt.skipWhitespaces(i, tokens)
     if tt.isIdentifier(tokens[i]):
-        fields = tt.getNamesFromId(tokens[i])
+        fields = [tt.getNamesFromId(tokens[i])]
     elif tt.isIdentifierList(tokens[i]):
         fields = tt.getNamesFromIdList(tokens[i])
     elif tt.isWildcard(tokens[i]):

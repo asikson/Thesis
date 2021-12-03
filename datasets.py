@@ -1,30 +1,44 @@
-from database import Record
+from os import strerror
+from typing import Counter
 
 class Dataset:
     def __init__(self, *args):
-        # from table
+        # (table, alias)
         if len(args) == 2:
             table, alias = args[0], args[1]
             self.size = len(table.data)
-            self.rows = [Row(alias, rec) 
-                for pk, rec in table.data.items()]
-        # empty
+            self.pk_name = (alias, table.pk_name)
+
+            self.rows = dict()
+            for pk, rec in table.data.items():
+                self.rows[pk] = Row(alias, rec)
+        # ()
         else:
             self.size = 0
-            self.rows = []
+            self.rows = dict()
 
-    def addRow(self, row):
-        self.rows.append(row)
+    def setPkName(self, pk_name):
+        self.pk_name = pk_name
+
+    def addRow(self, pk, row):
+        self.rows[pk] = row
         self.size += 1
 
-    def getRow(self, idx):
-        return self.rows[idx]
+    def getPairFromIdx(self, idx):
+        return list(self.rows.items())[idx]
+    
+    def getRowFromPk(self, pk):
+        return self.rows[pk]
 
     def __str__(self):
-        return '\n'.join(map(str, self.rows))
+        return '\n'.join(map(lambda r: r[0].__str__() + ', ' + r[1].__str__(), 
+            self.rows.items()))
     
     def execute(self):
         return self
+
+    def fakePk(self):
+        return self.size + 1
 
 class Row:
     def __init__(self, *args):
@@ -96,7 +110,7 @@ class Operator:
         else:
             self.idx += 1
             self.counter += 1
-            return self.dataset.getRow(self.idx)
+            return self.dataset.getPairFromIdx(self.idx)
 
     def reset(self):
         self.idx = -1
