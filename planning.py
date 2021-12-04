@@ -1,24 +1,20 @@
-import datasets as ds
 import algebra as ra
+import functools as ft
 
 # one general projection 
-# from one common selection
+# one common selection
 # from cross joins
 def naivePlan(output, database):
     fields, predicates, tables = output.get()
-    
-    datasets = makeDatasets(tables, database)
-    outerDataset = ra.Read(datasets[0])
-    if len(datasets) > 1:
-        i = 1
-        while i < len(datasets):
-            outerDataset = ra.CrossProduct(outerDataset, datasets[i])
-            i += 1
 
-    return ra.Projection(fields, ra.Selection(predicates, outerDataset))
+    reads = [ra.Read(t, database) for t in tables]
+
+    if len(reads) > 1:
+        outer = ft.reduce(lambda x, y: ra.CrossProduct(x, y), reads)
+    else:
+        outer = reads[0]
+
+    return ra.Projection(fields, ra.Selection(predicates, outer))
 
 def executePlan(plan):
     return plan.execute()
-
-def makeDatasets(tables, database):
-    return [ds.Dataset(database.getTable(t.name), t.alias) for t in tables]

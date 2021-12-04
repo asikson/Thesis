@@ -1,5 +1,24 @@
 from random import randrange
 
+class myDatabase:
+    def __init__(self):
+        self.tables = dict()
+
+    def addTable(self, tablename, pk, columns):
+        self.tables[tablename] = Table(tablename, pk, columns)
+    
+    def printTable(self, tablename):
+        print(self.tables[tablename])
+
+    def addRecord(self, tablename, record):
+        if tablename not in self.tables.keys():
+            print("No such table")
+        else:
+            self.tables[tablename].addRecord(record)
+
+    def getTable(self, tablename):
+        return self.tables[tablename]
+
 class Table:
     def __init__(self, name, pk_name, columns):
         self.name = name
@@ -16,7 +35,7 @@ class Table:
                 self.data[record.pk][c] = v
             
     def __str__(self):
-        return self.name.upper() + "\n" + self.pk \
+        return self.name.upper() + "\n" + self.pk_name \
             + " * " + " * ".join(self.columns) \
             + "\n" + "\n".join(map(lambda r: str(r[0]) + " " \
             + " ".join(map(str, r[1].values())), self.data.items()))
@@ -28,27 +47,6 @@ class Record:
 
     def __str__(self):
         return self.pk + " -> ".join(self.values)
-
-class myDatabase:
-    def __init__(self):
-        self.tables = dict()
-        self.tableNames = []
-
-    def addTable(self, tablename, pk, columns):
-        self.tables[tablename] = Table(tablename, pk, columns)
-        self.tableNames.append(tablename)
-    
-    def printTable(self, tablename):
-        print(self.tables[tablename])
-
-    def addRecord(self, tablename, record):
-        if tablename not in self.tableNames:
-            print("No such table")
-        else:
-            self.tables[tablename].addRecord(record)
-
-    def getTable(self, tablename):
-        return self.tables[tablename]
 
 def createDatabase():
     db = myDatabase()
