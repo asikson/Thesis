@@ -1,15 +1,16 @@
 class Predicate:
-    def __init__(self, left, right):
+    def __init__(self, left, right, operator):
         self.left = left
         self.right = right
+        self.operator = operator
         self.withValue = not isinstance(right, Field)
 
     def __str__(self):
-        result = self.left.__str__() + " = "
+        result = self.left.__str__() + ' ' + self.operator
         if self.withValue:
-            result += "'" + self.right + "'"
+            result += ' ' + str(self.right)
         else:
-            result += self.right.__str__()
+            result += ' ' + self.right.__str__()
 
         return result
 

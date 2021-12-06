@@ -65,12 +65,20 @@ def evaluateComparison(tokens):
     i = tt.findIdentifiers(-1, tokens)
     left = tt.getNamesFromId(tokens[i])
     left = out.Field(left[1], left[0])
-    
-    i = tt.findIdentifiers(i, tokens)
-    right = tt.getNamesFromId(tokens[i])
-    if len(right) == 1:
-        right = right[0]
-    else:
-        right = out.Field(right[1], right[0])
 
-    return out.Predicate(left, right)
+    i = tt.findOperator(i, tokens)
+    operator = tt.getValueFromIdentifier(tokens[i])
+    if operator not in ['=', '<', '>', '!=']:
+        return -1
+    
+    i = tt.findIdentifiersOrNumbers(i, tokens)
+    if tt.isIdentifier(tokens[i]):
+        right = tt.getNamesFromId(tokens[i])
+        if len(right) == 1:
+            right = right[0]
+        else:
+            right = out.Field(right[1], right[0])
+    elif tt.isNumber(tokens[i]):
+        right = float(tt.getValueFromIdentifier(tokens[i]))
+
+    return out.Predicate(left, right, operator)

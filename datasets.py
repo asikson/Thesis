@@ -42,11 +42,20 @@ class Row:
     def checkPredicate(self, predicate):
         leftVal = self.valueForField(predicate.left)
         if predicate.withValue:
-            return leftVal == predicate.right
+            rightVal = predicate.right
         else:
             rightVal = self.valueForField(predicate.right)
     
+        if predicate.operator == '=':
             return leftVal == rightVal
+        elif predicate.operator == '!=':
+            return leftVal != rightVal
+        elif predicate.operator == '>':
+            return leftVal > rightVal
+        elif predicate.operator == '<':
+            return leftVal < rightVal
+        else:
+            return -1
 
     def valueForField(self, field):
         field = (field.tablename, field.name)

@@ -34,6 +34,13 @@ def isWhereKeyword(token):
 def isTokenList(token):
     return isinstance(token, sqlp.sql.TokenList)
 
+def isOperator(token):
+    return token.ttype == sqlp.tokens.Comparison
+
+def isNumber(token):
+    return token.ttype in [sqlp.tokens.Number.Integer,
+        sqlp.tokens.Number.Float]
+
 # skipping and finding
 def skipWhitespaces(i, tokens):
     j = i + 1
@@ -56,6 +63,20 @@ def findIdentifiers(i, tokens):
         j += 1
     return j
 
+def findOperator(i, tokens):
+    j = i + 1
+    while (j < len(tokens) 
+        and not isOperator(tokens[j])):
+        j += 1
+    return j
+
+def findIdentifiersOrNumbers(i, tokens):
+    j = i + 1
+    while (j < len(tokens) 
+        and not isIdentifier(tokens[j])
+        and not isNumber(tokens[j])):
+        j += 1
+    return j
 
 # getting names
 def getNamesFromId(identifier):
@@ -78,3 +99,6 @@ def getTablesFromId(identifier):
 
 def getTablesFromIdList(identifierList):
     return [getTablesFromId(i) for i in identifierList.get_identifiers()]
+
+def getValueFromIdentifier(identifier):
+    return identifier._get_repr_value()
