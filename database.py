@@ -65,7 +65,7 @@ def createDatabase():
         i += 1
 
     # PEOPLE
-    numberOfPeople = 100
+    numberOfPeople = 10
     db.addTable("people", "id", ["id", "name", "surname", "city", "age"])
     for i in range(numberOfPeople):
         n = names[randrange(len(names))]

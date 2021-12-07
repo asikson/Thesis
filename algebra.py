@@ -81,13 +81,42 @@ class Join:
         self.field_2 = field_2
 
     def execute(self):
-        self.executeDatasets()
+        cost = self.executeDatasets()
+        output = ds.Dataset()
+
+        # joining by key
+        if self.field_2.name == self.dataset_2.pk_name:
+            while not self.op1.end():
+                left = self.op1.current()
+                k = left.valueForField(self.field_1)
+                right = self.dataset_2.getRowFromPk(k)
+                row = left.copy().concat(right)
+                output.addRow(row)
+                self.op1.next()
+
+            return output, cost
+        # joining by other field
+        else:
+            while not self.op1.end():
+                left = self.op1.current()
+                k = left.valueForField(self.field_1)
+                while not self.op2.end():
+                    right = self.op2.current()
+                    if right.valueForField(self.field_2) == k:
+                        row = left.copy().concat(right)
+                        output.addRow(row)
+                    self.op2.next()
+                self.op2.reset()
+                self.op1.next()
+
+            return output, cost + self.op1.cost() + self.op2.cost()
 
     def executeDatasets(self):
-        self.dataset_1 = self.dataset_1.execute()
-        self.dataset_2 = self.dataset_2.execute()
+        self.dataset_1, c1 = self.dataset_1.execute()
         self.op1 = ds.Operator(self.dataset_1)
         self.op2 = ds.Operator(self.dataset_2)
+
+        return c1
 
 class CrossProduct:
     def __init__(self, dataset_1, dataset_2):
@@ -137,3 +166,21 @@ class Read:
         output.fillFromTable(self.database.getTable(self.tablename), self.alias)
 
         return output, output.size
+
+class ReadPkDict:
+    def __init__(self, table, database):
+        self.tablename = table.name
+        self.alias = table.alias
+        self.database = database
+        self.pk_name = self.database.getTable(self.tablename).pk_name
+    '''
+    def execute(self):
+        output = ds.DatasetPkDict()
+        output.fillFromTable(self.database.getTable(self.tablename), self.alias)
+
+        return output, 0
+    '''
+    def getRowFromPk(self, pk):
+        output = ds.DatasetPkDict(self.database.getTable(self.tablename), self.alias)
+        
+        return output.getRowFromPk(pk)

@@ -90,14 +90,14 @@ class Dataset:
         return '\n'.join(map(str, self.rows))
 
     def execute(self):
-        return self
+        return self, 0
 
 class DatasetPkDict:
     def __init__(self, table, alias):
         self.pk_name = table.pk_name
         self.rows = dict()
         for pk, rec in table.data.items():
-            self.rows[pk] = Row(alias, rec)
+            self.rows[pk] = Row.rowFromRecord(rec, alias)
 
     def getRowFromPk(self, pk):
         return self.rows[pk]
@@ -105,12 +105,6 @@ class DatasetPkDict:
     def __str__(self):
         return '\n'.join(map(lambda r: '* ' + self.pk_name + ': ' + \
             r.__str__(), self.rows))
-
-    def execute(self):
-        dataset = Dataset()
-        dataset.fillRows(list(self.rows.values()))
-
-        return dataset
 
 class Operator:
     def __init__(self, dataset):
@@ -133,13 +127,13 @@ class Operator:
         self.idx = 0
     
     def end(self):
-        return self.idx == self.dataset.size - 1
+        return self.idx == self.dataset.size
 
     def projectCurrent(self, fields):
-        self.current.project(fields)
+        self.current().project(fields)
 
     def selectCurrent(self, predicates):
-        self.current.select(predicates)
+        self.current().select(predicates)
 
     def cost(self):
         return self.counter
