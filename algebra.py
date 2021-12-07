@@ -173,13 +173,7 @@ class ReadPkDict:
         self.alias = table.alias
         self.database = database
         self.pk_name = self.database.getTable(self.tablename).pk_name
-    '''
-    def execute(self):
-        output = ds.DatasetPkDict()
-        output.fillFromTable(self.database.getTable(self.tablename), self.alias)
 
-        return output, 0
-    '''
     def getRowFromPk(self, pk):
         output = ds.DatasetPkDict(self.database.getTable(self.tablename), self.alias)
         

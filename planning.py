@@ -6,53 +6,103 @@ class Plan:
         self.fields, self.predicates, self.tables = queryOutput.get()
         self.database = database
         self.mode = mode
-
-    def planCrossAll(self):
-        reads = self.readAllTables()
-        if len(reads) > 1:
-            return ft.reduce(lambda x, y: ra.CrossProduct(x, y), reads)
-        else:
-            return reads[0]
-    
-    def planJoin(self, left, table, field_1, field_2):
-        return ra.Join(left, self.readIntoPkDict(table), field_1, field_2)
+        self.tableDict = dict()
+        for t in self.tables:
+            self.tableDict[t.alias] = t
 
     def readTable(self, table):
         return ra.Read(table, self.database)
 
-    def readAllTables(self):
-        return [self.readTable(t) for t in self.tables]
-    
     def readIntoPkDict(self, table):
         return ra.ReadPkDict(table, self.database)
 
+    def readTables(self, tables):
+        return [self.readTable(t) for t in tables]
+
+    def crossDatasets(self, datasets):
+        if len(datasets) > 1:
+            return ft.reduce(lambda x, y: ra.CrossProduct(x, y), datasets)
+        else:
+            return datasets[0]
+    
+    def joinTwoTables(self, left, table, predicate):
+        return ra.Join(left, self.readIntoPkDict(table), 
+            predicate.left, predicate.right)
+
+    def selectionPushdown(self):
+        selections = []
+        tablesLeft = []
+        predsWithoutVal = list(filter(lambda p: not p.withValue, self.predicates))
+        predsWithVal = list(filter(lambda p: p.withValue, self.predicates))
+
+        for t in self.tables:
+            preds = list(filter(lambda p: p.left.tablename == t.alias, predsWithVal))
+            if preds == []:
+                tablesLeft.append(t)
+            else:
+                selections.append(ra.Selection(preds, self.readTable(t)))
+        
+        return selections, tablesLeft, predsWithoutVal
+
+    def applyJoins(self):
+        predsWithoutVal = list(filter(lambda p: not p.withValue, self.predicates))
+        predsWithVal = list(filter(lambda p: p.withValue, self.predicates))
+
+        toJoin = [(self.tableDict[p.right.tablename], p) 
+            for p in predsWithoutVal]
+        
+        tablesLeft = [t for t in self.tables 
+            if t not in [p[0] for p in toJoin]]
+
+        return toJoin, tablesLeft, predsWithVal
+
+
     def execute(self):
-        if self.mode == 'naive':
-            return self.executeNaive()
-        elif self.mode == 'join':
-            return self.executeSimpleJoin()
+        if self.mode == 'cross_all':
+            return self.executeCrossAll()
+        elif self.mode == 'selection_pushdown':
+            return self.executeSelectionPushdown()
+        elif self.mode == 'apply_joins':
+            return self.executeApplyJoins()
         else:
             print('Unknown mode')
 
-    # one general projection 
-    # one common selection
-    # from cross joins
-    def executeNaive(self):
-        crosses = self.planCrossAll()
+    # crossing all tables and selecting rows
+    def executeCrossAll(self):
+        reads = self.readTables(self.tables)
+        crosses = self.crossDatasets(reads)
         output = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
 
         result, cost = output.execute()
-        print('Naive cost:', cost)
+        print('Cost of crossing all:', cost)
 
         return result
 
-    def executeSimpleJoin(self):
+    # selection pushdown
+    def executeSelectionPushdown(self):
+        selections, self.tables, self.predicates = self.selectionPushdown()
+        reads = self.readTables(self.tables)
+        crosses = self.crossDatasets(reads + selections)
+
         output = ra.Projection(self.fields, 
-            self.planJoin(self.readTable(self.tables[0]), self.tables[1],
-            self.predicates[0].left, self.predicates[0].right))
+            ra.Selection(self.predicates, crosses))
 
         result, cost = output.execute()
-        print('Cost of simple join:', cost)
+        print('Cost of selection pushdown:', cost)
 
         return result
 
+    # apply joins where possible
+    def executeApplyJoins(self):
+        toJoin, self.tables, self.predicates = self.applyJoins()
+        reads = self.readTables(self.tables)
+        crosses = self.crossDatasets(reads) 
+
+        output = ra.Projection(self.fields, 
+            ra.Selection(self.predicates,
+                ft.reduce(lambda x, y: self.joinTwoTables(x, y[0], y[1]), toJoin, crosses)))
+
+        result, cost = output.execute()
+        print('Cost of applying joins:', cost)
+
+        return result
