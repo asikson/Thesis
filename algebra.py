@@ -18,18 +18,19 @@ class Projection:
         return result
 
     def execute(self):
-        self.executeDataset()
+        cost = self.executeDataset()
         if not self.wildcard:
             while not self.op.end():
                 self.op.projectCurrent(self.fields)
                 self.op.next()
-            self.printCost()
 
-        return self.dataset
+        return self.dataset, cost + self.cost()
 
     def executeDataset(self):
-        self.dataset = self.dataset.execute()
+        self.dataset, cost = self.dataset.execute()
         self.op = ds.Operator(self.dataset)
+
+        return cost
 
     def cost(self):
         return self.op.cost()
@@ -49,7 +50,7 @@ class Selection:
             "\n" + self.dataset.__str__()
 
     def execute(self):
-        self.executeDataset()
+        cost = self.executeDataset()
         output = ds.Dataset()
 
         while not self.op.end():
@@ -58,12 +59,13 @@ class Selection:
             self.op.next()
         self.dataset = output
 
-        self.printCost()
-        return self.dataset
+        return self.dataset, cost + self.cost()
 
     def executeDataset(self):
-        self.dataset = self.dataset.execute()
+        self.dataset, cost = self.dataset.execute()
         self.op = ds.Operator(self.dataset)
+
+        return cost
 
     def cost(self):
         return self.op.cost()
@@ -95,7 +97,7 @@ class CrossProduct:
         self.op2 = ds.Operator(self.dataset_2)
 
     def execute(self):
-        self.executeDatasets()
+        cost = self.executeDatasets()
         output = ds.Dataset()
 
         while not self.op1.end():
@@ -108,14 +110,15 @@ class CrossProduct:
             self.op2.reset()
             self.op1.next()
    
-        self.printCost()
-        return output
+        return output, cost + self.cost()
 
     def executeDatasets(self):
-        self.dataset_1 = self.dataset_1.execute()
-        self.dataset_2 = self.dataset_2.execute()
+        self.dataset_1, c1 = self.dataset_1.execute()
+        self.dataset_2, c2 = self.dataset_2.execute()
         self.op1 = ds.Operator(self.dataset_1)
         self.op2 = ds.Operator(self.dataset_2)
+
+        return c1 + c2
 
     def cost(self):
         return self.op1.cost() + self.op2.cost()
@@ -133,4 +136,4 @@ class Read:
         output = ds.Dataset()
         output.fillFromTable(self.database.getTable(self.tablename), self.alias)
 
-        return output
+        return output, output.size
