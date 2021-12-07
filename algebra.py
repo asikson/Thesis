@@ -24,6 +24,10 @@ class Projection:
                 self.op.projectCurrent(self.fields)
                 self.op.next()
 
+        print('|')
+        print('V')
+        print(self.dataset)
+
         return self.dataset, cost + self.cost()
 
     def executeDataset(self):
@@ -37,7 +41,7 @@ class Projection:
 
     def printCost(self):
         print('Cost of PROJECTION: ', self.cost())
-
+        
 class Selection:
     def __init__(self, predicates, dataset):
         self.predicates = predicates
@@ -59,6 +63,10 @@ class Selection:
             self.op.next()
         self.dataset = output
 
+        print('|')
+        print('V')
+        print(self.dataset)
+
         return self.dataset, cost + self.cost()
 
     def executeDataset(self):
@@ -72,6 +80,11 @@ class Selection:
 
     def printCost(self):
         print('Cost of SELECTION: ', self.cost())
+
+    def printDataset(self):
+        print('|')
+        print('V')
+        print(self.dataset)
 
 class Join:
     def __init__(self, dataset_1, dataset_2, field_1, field_2):
@@ -94,7 +107,11 @@ class Join:
                 output.addRow(row)
                 self.op1.next()
 
-            return output, cost
+            print('|')
+            print('V')
+            print(output)
+
+            return output, cost + self.op1.cost()
         # joining by other field
         else:
             while not self.op1.end():
@@ -108,6 +125,10 @@ class Join:
                     self.op2.next()
                 self.op2.reset()
                 self.op1.next()
+            
+            print('|')
+            print('V')
+            print(self.output)
 
             return output, cost + self.op1.cost() + self.op2.cost()
 
@@ -138,6 +159,10 @@ class CrossProduct:
                 self.op2.next()
             self.op2.reset()
             self.op1.next()
+
+        print('|')
+        print('V')
+        print(output)
    
         return output, cost + self.cost()
 
