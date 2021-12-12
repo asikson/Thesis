@@ -1,205 +1,90 @@
-import datasets as ds
+import row
 
 class Projection:
-    def __init__(self, fields, dataset):
+    def __init__(self, fields, data):
         self.fields = fields
         self.wildcard = (len(fields) == 0)
-        self.dataset = dataset
-        self.op = ds.Operator(self.dataset)
+        self.data = data
+        self.cost = 0
 
-    def __str__(self):
-        result = "PROJECTION: "
-        if self.wildcard:
-            result += "* "
-        else: 
-            result += ", ".join(map(str, self.fields))
-        result += "\n" + self.dataset.__str__()
+    def __iter__(self):
+        for rec in self.data:
+            self.cost += 1
+            yield rec.copy().project(self.fields)
+        print('Projection cost: ' + str(self.cost))
+        self.cost += self.data.cost
 
-        return result
-
-    def execute(self):
-        cost = self.executeDataset()
-        if not self.wildcard:
-            while not self.op.end():
-                self.op.projectCurrent(self.fields)
-                self.op.next()
-
-        print('|')
-        print('V')
-        print(self.dataset)
-
-        return self.dataset, cost + self.cost()
-
-    def executeDataset(self):
-        self.dataset, cost = self.dataset.execute()
-        self.op = ds.Operator(self.dataset)
-
-        return cost
-
-    def cost(self):
-        return self.op.cost()
-
-    def printCost(self):
-        print('Cost of PROJECTION: ', self.cost())
-        
 class Selection:
-    def __init__(self, predicates, dataset):
+    def __init__(self, predicates, data):
         self.predicates = predicates
-        self.dataset = dataset
-        self.op = ds.Operator(self.dataset)
+        self.data = data
+        self.cost = 0
 
-    def __str__(self):
-        return "SELECTION: " + \
-            ", ".join(map(str, self.predicates)) + \
-            "\n" + self.dataset.__str__()
-
-    def execute(self):
-        cost = self.executeDataset()
-        output = ds.Dataset()
-
-        while not self.op.end():
-            if self.op.current().select(self.predicates):
-                output.addRow(self.op.current())
-            self.op.next()
-        self.dataset = output
-
-        print('|')
-        print('V')
-        print(self.dataset)
-
-        return self.dataset, cost + self.cost()
-
-    def executeDataset(self):
-        self.dataset, cost = self.dataset.execute()
-        self.op = ds.Operator(self.dataset)
-
-        return cost
-
-    def cost(self):
-        return self.op.cost()
-
-    def printCost(self):
-        print('Cost of SELECTION: ', self.cost())
-
-    def printDataset(self):
-        print('|')
-        print('V')
-        print(self.dataset)
+    def __iter__(self):
+        for rec in self.data:
+            self.cost += 1
+            if rec.select(self.predicates):
+                yield rec
+        print('Selection cost: ' + str(self.cost))
+        self.cost += self.data.cost
 
 class Join:
-    def __init__(self, dataset_1, dataset_2, field_1, field_2):
-        self.dataset_1 = dataset_1
-        self.dataset_2 = dataset_2
-        self.field_1 = field_1
-        self.field_2 = field_2
+    def __init__(self, left, right, leftField, rightField):
+        self.left = left
+        self.right = right
+        self.leftField = leftField
+        self.rightField = rightField
+        self.cost = 0
 
-    def execute(self):
-        cost = self.executeDatasets()
-        output = ds.Dataset()
-
-        # joining by key
-        if self.field_2.name == self.dataset_2.pk_name:
-            while not self.op1.end():
-                left = self.op1.current()
-                k = left.valueForField(self.field_1)
-                right = self.dataset_2.getRowFromPk(k)
-                row = left.copy().concat(right)
-                output.addRow(row)
-                self.op1.next()
-
-            print('|')
-            print('V')
-            print(output)
-
-            return output, cost + self.op1.cost()
-        # joining by other field
+    def __iter__(self):
+        if not isinstance(self.right, ReadPkDict):
+            for l in self.left:
+                k = l.valueForField(self.leftField)
+                for r in self.right:
+                    self.cost += 1
+                    if r.valueForField(self.rightField) == k:
+                        yield l.copy().concat(r)
         else:
-            while not self.op1.end():
-                left = self.op1.current()
-                k = left.valueForField(self.field_1)
-                while not self.op2.end():
-                    right = self.op2.current()
-                    if right.valueForField(self.field_2) == k:
-                        row = left.copy().concat(right)
-                        output.addRow(row)
-                    self.op2.next()
-                self.op2.reset()
-                self.op1.next()
-            
-            print('|')
-            print('V')
-            print(self.output)
-
-            return output, cost + self.op1.cost() + self.op2.cost()
-
-    def executeDatasets(self):
-        self.dataset_1, c1 = self.dataset_1.execute()
-        self.op1 = ds.Operator(self.dataset_1)
-        self.op2 = ds.Operator(self.dataset_2)
-
-        return c1
+            for l in self.left:
+                self.cost += 1
+                k = l.valueForField(self.leftField)
+                r = self.right.get(k)
+                if r != 1:
+                    yield l.copy().concat(r)
+        print('Join cost: ' + str(self.cost))
+        self.cost += self.left.cost + self.right.cost
 
 class CrossProduct:
-    def __init__(self, dataset_1, dataset_2):
-        self.dataset_1 = dataset_1
-        self.dataset_2 = dataset_2
-        self.op1 = ds.Operator(self.dataset_1)
-        self.op2 = ds.Operator(self.dataset_2)
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+        self.cost = 0
 
-    def execute(self):
-        cost = self.executeDatasets()
-        output = ds.Dataset()
-
-        while not self.op1.end():
-            left = self.op1.current()
-            while not self.op2.end():
-                right = self.op2.current()
-                row = left.copy().concat(right)
-                output.addRow(row)
-                self.op2.next()
-            self.op2.reset()
-            self.op1.next()
-
-        print('|')
-        print('V')
-        print(output)
-   
-        return output, cost + self.cost()
-
-    def executeDatasets(self):
-        self.dataset_1, c1 = self.dataset_1.execute()
-        self.dataset_2, c2 = self.dataset_2.execute()
-        self.op1 = ds.Operator(self.dataset_1)
-        self.op2 = ds.Operator(self.dataset_2)
-
-        return c1 + c2
-
-    def cost(self):
-        return self.op1.cost() + self.op2.cost()
-
-    def printCost(self):
-        print('Cost of CROSS JOIN: ', self.cost())
+    def __iter__(self):
+        for l in self.left:
+            for r in self.right:
+                self.cost += 1
+                yield l.copy().concat(r)
+        print('Cross cost: ' + str(self.cost))
+        self.cost += self.left.cost + self.right.cost
 
 class Read:
-    def __init__(self, table, database):
-        self.tablename = table.name
-        self.alias = table.alias
-        self.database = database
+    def __init__(self, outputTable, database):
+        self.alias = outputTable.alias
+        self.table = database.getTable(outputTable.name)
+        self.cost = 0
 
-    def execute(self):
-        output = ds.Dataset()
-        output.fillFromTable(self.database.getTable(self.tablename), self.alias)
-
-        return output, output.size
+    def __iter__(self):
+        for rec in self.table.data.values():
+            self.cost += 1
+            yield row.Row.rowFromRecord(rec, self.alias)
+        print('Read cost: ' + str(self.cost))
 
 class ReadPkDict:
-    def __init__(self, table, database):
-        self.tablename = table.name
-        self.alias = table.alias
-        self.database = database
-        self.pk_name = self.database.getTable(self.tablename).pk_name
+    def __init__(self, outputTable, database):
+        self.alias = outputTable.alias
+        self.table = database.getTable(outputTable.name)
+        self.cost = 0
 
-    def getRowFromPk(self, pk):
-        output = ds.DatasetPkDict(self.database.getTable(self.tablename), self.alias)
-        
-        return output.getRowFromPk(pk)
+    def get(self, pk):
+        return row.Row.rowFromRecord(self.table.getRecord(pk), self.alias)

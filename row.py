@@ -31,6 +31,7 @@ class Row:
             if k in fields:
                 filtered[k] = v
         self.values = filtered
+        return self
 
     def select(self, predicates):
         for p in predicates:
@@ -64,76 +65,3 @@ class Row:
         else:
             print('No such field')
             return -1
-
-class Dataset:
-    def __init__(self):
-        self.size = 0
-        self.rows = []
-
-    def fillRows(self, rows):
-        self.size = len(rows)
-        self.rows = rows
-
-    def fillFromTable(self, table, alias):
-        self.size = len(table.data)
-        self.rows = [Row.rowFromRecord(rec, alias)
-            for pk, rec in table.data.items()]
-
-    def addRow(self, row):
-        self.rows.append(row)
-        self.size += 1
-
-    def getRowFromIdx(self, idx):
-        return self.rows[idx]
-
-    def __str__(self):
-        return '\n'.join(map(str, self.rows))
-
-    def execute(self):
-        return self, 0
-
-class DatasetPkDict:
-    def __init__(self, table, alias):
-        self.pk_name = table.pk_name
-        self.rows = dict()
-        for pk, rec in table.data.items():
-            self.rows[pk] = Row.rowFromRecord(rec, alias)
-
-    def getRowFromPk(self, pk):
-        return self.rows[pk]
-
-    def __str__(self):
-        return '\n'.join(map(lambda r: '* ' + self.pk_name + ': ' + \
-            r.__str__(), self.rows))
-
-class Operator:
-    def __init__(self, dataset):
-        self.dataset = dataset
-        self.idx = 0
-        self.counter = 0 
-
-    def current(self):
-        return self.dataset.getRowFromIdx(self.idx)
-
-    def next(self):
-        if self.end():
-            print('Operator out of range')
-            return -1
-        else:
-            self.idx += 1
-            self.counter += 1
-
-    def reset(self):
-        self.idx = 0
-    
-    def end(self):
-        return self.idx == self.dataset.size
-
-    def projectCurrent(self, fields):
-        self.current().project(fields)
-
-    def selectCurrent(self, predicates):
-        self.current().select(predicates)
-
-    def cost(self):
-        return self.counter

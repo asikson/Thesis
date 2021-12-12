@@ -14,16 +14,17 @@ formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
 
 #statement._pprint_tree()
+
 output = ev.evaluateStatement(statement.tokens)
 
 plan1 = pl.Plan(output, db, 'cross_all')
-print(plan1.execute())
+plan1.execute()
 
 print()
 
 plan2 = pl.Plan(output, db, 'selection_pushdown')
-print(plan2.execute())
+plan2.execute()
 
 print()
 plan3 = pl.Plan(output, db, 'apply_joins')
-print(plan3.execute())
+plan3.execute()

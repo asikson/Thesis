@@ -26,6 +26,12 @@ class Table:
         self.columns = columns
         self.data = dict()
 
+    def __str__(self):
+        return self.name.upper() + "\n" + self.pk_name \
+            + " * " + " * ".join(self.columns) \
+            + "\n" + "\n".join(map(lambda r: str(r[0]) + " " \
+            + " ".join(map(str, r[1].values())), self.data.items()))
+
     def addRecord(self, record):
         if record.pk in self.data.keys():
             print("Primary key violation")
@@ -33,12 +39,11 @@ class Table:
             self.data[record.pk] = dict()
             for c, v in zip(self.columns, record.values):
                 self.data[record.pk][c] = v
-            
-    def __str__(self):
-        return self.name.upper() + "\n" + self.pk_name \
-            + " * " + " * ".join(self.columns) \
-            + "\n" + "\n".join(map(lambda r: str(r[0]) + " " \
-            + " ".join(map(str, r[1].values())), self.data.items()))
+
+    def getRecord(self, pk):
+        if pk not in self.data.keys():
+            return -1
+        return self.data[pk]
 
 class Record:
     def __init__(self, pk, values):
@@ -65,7 +70,7 @@ def createDatabase():
         i += 1
 
     # PEOPLE
-    numberOfPeople = 3
+    numberOfPeople = 10
     db.addTable("people", "id", ["id", "name", "surname", "city", "age"])
     for i in range(numberOfPeople):
         n = names[randrange(len(names))]

@@ -19,14 +19,14 @@ class Plan:
     def readTables(self, tables):
         return [self.readTable(t) for t in tables]
 
-    def crossDatasets(self, datasets):
-        if len(datasets) > 1:
-            return ft.reduce(lambda x, y: ra.CrossProduct(x, y), datasets)
+    def crossTables(self, tables):
+        if len(tables) > 1:
+            return ft.reduce(lambda x, y: ra.CrossProduct(x, y), tables)
         else:
-            return datasets[0]
+            return tables[0]
     
-    def joinTwoTables(self, left, table, predicate):
-        return ra.Join(left, self.readIntoPkDict(table), 
+    def joinTwoTables(self, left, right, predicate):
+        return ra.Join(left, right, 
             predicate.left, predicate.right)
 
     def selectionPushdown(self):
@@ -70,39 +70,44 @@ class Plan:
     # crossing all tables and selecting rows
     def executeCrossAll(self):
         reads = self.readTables(self.tables)
-        crosses = self.crossDatasets(reads)
-        output = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
+        crosses = self.crossTables(reads)
+        result = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
 
-        result, cost = output.execute()
-        print('Cost of crossing all:', cost)
-
-        return result
+        for rec in result:
+            print(rec)
+        print('Cost of crossing all: ' + str(result.cost))
 
     # selection pushdown
     def executeSelectionPushdown(self):
         selections, self.tables, self.predicates = self.selectionPushdown()
         reads = self.readTables(self.tables)
-        crosses = self.crossDatasets(reads + selections)
+        crosses = self.crossTables(reads + selections)
 
-        output = ra.Projection(self.fields, 
+        result = ra.Projection(self.fields, 
             ra.Selection(self.predicates, crosses))
 
-        result, cost = output.execute()
-        print('Cost of selection pushdown:', cost)
-
-        return result
+        for rec in result:
+            print(rec)
+        print('Cost of selection pushdown: ' + str(result.cost))
 
     # apply joins where possible
     def executeApplyJoins(self):
         toJoin, self.tables, self.predicates = self.applyJoins()
         reads = self.readTables(self.tables)
-        crosses = self.crossDatasets(reads) 
+        crosses = self.crossTables(reads) 
 
-        output = ra.Projection(self.fields, 
+        '''
+        toJoin = list(map(lambda x: 
+            (self.readIntoPkDict(x[0]), x[1]) if x[1].right.name == x[0].pk_name
+            else (self.Read(x[0]), x[1]), toJoin))
+        '''
+        toJoin = list(map(lambda x: 
+            (self.readIntoPkDict(x[0]), x[1]), toJoin))
+
+        result = ra.Projection(self.fields, 
             ra.Selection(self.predicates,
                 ft.reduce(lambda x, y: self.joinTwoTables(x, y[0], y[1]), toJoin, crosses)))
 
-        result, cost = output.execute()
-        print('Cost of applying joins:', cost)
-
-        return result
+        for rec in result:
+            print(rec)
+        print('Cost of applying joins: ' + str(result.cost))
