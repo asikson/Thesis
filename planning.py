@@ -67,28 +67,29 @@ class Plan:
         else:
             print('Unknown mode')
 
+    def printResult(self, result, info):
+        for rec in result:
+            print(rec)
+        print('Cost of ' + info + str(result.cost))
+
     # crossing all tables and selecting rows
     def executeCrossAll(self):
         reads = self.readTables(self.tables)
         crosses = self.crossTables(reads)
         result = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
 
-        for rec in result:
-            print(rec)
-        print('Cost of crossing all: ' + str(result.cost))
+        self.printResult(result, 'crossing all: ')
 
     # selection pushdown
     def executeSelectionPushdown(self):
         selections, self.tables, self.predicates = self.selectionPushdown()
         reads = self.readTables(self.tables)
-        crosses = self.crossTables(reads + selections)
+        crosses = self.crossTables(selections + reads)
 
         result = ra.Projection(self.fields, 
             ra.Selection(self.predicates, crosses))
 
-        for rec in result:
-            print(rec)
-        print('Cost of selection pushdown: ' + str(result.cost))
+        self.printResult(result, 'selection pushdown: ')
 
     # apply joins where possible
     def executeApplyJoins(self):
@@ -96,18 +97,13 @@ class Plan:
         reads = self.readTables(self.tables)
         crosses = self.crossTables(reads) 
 
-        '''
         toJoin = list(map(lambda x: 
-            (self.readIntoPkDict(x[0]), x[1]) if x[1].right.name == x[0].pk_name
+            (self.readIntoPkDict(x[0]), x[1]) 
+                if x[1].right.name == self.database.getTable(x[0].name).pk_name
             else (self.Read(x[0]), x[1]), toJoin))
-        '''
-        toJoin = list(map(lambda x: 
-            (self.readIntoPkDict(x[0]), x[1]), toJoin))
 
         result = ra.Projection(self.fields, 
             ra.Selection(self.predicates,
                 ft.reduce(lambda x, y: self.joinTwoTables(x, y[0], y[1]), toJoin, crosses)))
-
-        for rec in result:
-            print(rec)
-        print('Cost of applying joins: ' + str(result.cost))
+        
+        self.printResult(result, 'applying joins: ')

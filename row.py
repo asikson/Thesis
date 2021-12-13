@@ -1,6 +1,11 @@
+import functools as ft
+
 class Row:
     def __init__(self):
         self.values = dict()
+
+    def __str__(self):
+        return ' '.join(map(str, self.values.items()))
 
     @staticmethod
     def rowFromRecord(record, tablename):
@@ -16,21 +21,22 @@ class Row:
 
         return newRow
 
-    def __str__(self):
-        return ' '.join(map(str, self.values.items()))
-
     def concat(self, other):
         for k, v in other.values.items():
             self.values[k] = v
         return self
     
     def project(self, fields):
+        def fieldSort(p1, p2):
+            return fields.index(p1[0]) < fields.index(p2[0])
+
         fields = [(f.tablename, f.name) for f in fields]
         filtered = dict()
+
         for k, v in self.values.items():
             if k in fields:
                 filtered[k] = v
-        self.values = filtered
+        self.values = {k: v for k, v in sorted(filtered.items(), key=ft.cmp_to_key(fieldSort))}
         return self
 
     def select(self, predicates):
