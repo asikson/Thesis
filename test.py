@@ -1,14 +1,11 @@
 import sqlparse as sqlp
 import evaluator as ev
 import planning as pl
-import database as db
 
-db = db.createDatabase()
-
-sql = 'select p.name, p.surname, p.age, c.name \
-    from people p, cities c \
-    where p.city = c.id \
-        and p.age > 25'
+sql = 'select s.name, s.surname, s.age, c.name \
+    from students s, cities c \
+    where s.city = c.id \
+        and s.age > 25'
 
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
@@ -17,14 +14,14 @@ statement = sqlp.parse(formatted)[0]
 
 output = ev.evaluateStatement(statement.tokens)
 
-plan1 = pl.Plan(output, db, 'cross_all')
+plan1 = pl.Plan(output, 'cross_all')
 plan1.execute()
 
 print()
 
-plan2 = pl.Plan(output, db, 'selection_pushdown')
+plan2 = pl.Plan(output, 'selection_pushdown')
 plan2.execute()
 
 print()
-plan3 = pl.Plan(output, db, 'apply_joins')
+plan3 = pl.Plan(output, 'apply_joins')
 plan3.execute()

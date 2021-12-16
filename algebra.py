@@ -1,4 +1,6 @@
 import row
+import berkeley as brk
+import info
 
 class Projection:
     def __init__(self, fields, data):
@@ -69,22 +71,26 @@ class CrossProduct:
         self.cost += self.left.cost + self.right.cost
 
 class Read:
-    def __init__(self, outputTable, database):
+    def __init__(self, outputTable):
+        self.tablename = outputTable.name
         self.alias = outputTable.alias
-        self.table = database.getTable(outputTable.name)
         self.cost = 0
 
     def __iter__(self):
-        for rec in self.table.data.values():
+        for rec in brk.tableIterator(self.tablename):
             self.cost += 1
-            yield row.Row.rowFromRecord(rec, self.alias)
+            yield row.Row.rowFromRecord(self.alias, 
+                info.getTableColumns(self.tablename), 
+                brk.getValuesFromRecord(rec))
         print('Read cost: ' + str(self.cost))
 
 class ReadPkDict:
-    def __init__(self, outputTable, database):
+    def __init__(self, outputTable):
+        self.tablename = outputTable.name
         self.alias = outputTable.alias
-        self.table = database.getTable(outputTable.name)
         self.cost = 0
 
     def get(self, pk):
-        return row.Row.rowFromRecord(self.table.getRecord(pk), self.alias)
+        return row.Row.rowFromRecord(self.alias,
+            info.getTableColumns(self.tablename),
+            brk.getValuesByPk(self.tablename, pk))

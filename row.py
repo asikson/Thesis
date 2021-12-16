@@ -8,9 +8,9 @@ class Row:
         return ' '.join(map(str, self.values.items()))
 
     @staticmethod
-    def rowFromRecord(record, tablename):
+    def rowFromRecord(tablename, columns, values):
         newRow = Row()
-        for c, v in record.items():
+        for c, v in zip(columns, values):
             newRow.values[(tablename, c)] = v
 
         return newRow

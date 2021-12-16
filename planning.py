@@ -2,19 +2,18 @@ import algebra as ra
 import functools as ft
 
 class Plan:
-    def __init__(self, queryOutput, database, mode):
+    def __init__(self, queryOutput, mode):
         self.fields, self.predicates, self.tables = queryOutput.get()
-        self.database = database
         self.mode = mode
         self.tableDict = dict()
         for t in self.tables:
             self.tableDict[t.alias] = t
 
     def readTable(self, table):
-        return ra.Read(table, self.database)
+        return ra.Read(table)
 
     def readIntoPkDict(self, table):
-        return ra.ReadPkDict(table, self.database)
+        return ra.ReadPkDict(table)
 
     def readTables(self, tables):
         return [self.readTable(t) for t in tables]
@@ -100,7 +99,7 @@ class Plan:
         toJoin = list(map(lambda x: 
             (self.readIntoPkDict(x[0]), x[1]) 
                 if x[1].right.name == self.database.getTable(x[0].name).pk_name
-            else (self.Read(x[0]), x[1]), toJoin))
+            else (self.readTable(x[0]), x[1]), toJoin))
 
         result = ra.Projection(self.fields, 
             ra.Selection(self.predicates,
