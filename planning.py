@@ -1,5 +1,8 @@
 import algebra as ra
 import functools as ft
+import info
+
+from info import getTablePk
 
 class Plan:
     def __init__(self, queryOutput, mode):
@@ -98,7 +101,7 @@ class Plan:
 
         toJoin = list(map(lambda x: 
             (self.readIntoPkDict(x[0]), x[1]) 
-                if x[1].right.name == self.database.getTable(x[0].name).pk_name
+                if x[1].right.name == info.getTablePk(x[0].name)
             else (self.readTable(x[0]), x[1]), toJoin))
 
         result = ra.Projection(self.fields, 

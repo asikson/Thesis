@@ -6,7 +6,6 @@ def printTable(name):
 
 def tableIterator(name):
     data = db.DB()
-    print(name)
     data.open(name, dbtype=db.DB_HASH, flags=db.DB_DIRTY_READ)
     cursor = data.cursor()
     rec = cursor.first()
@@ -17,10 +16,10 @@ def tableIterator(name):
     data.close()
 
 def getValuesFromRecord(rec):
-    return rec[1].split('\0').insert()
-
-def getPairFromRecord(rec):
-    return rec[0], getValuesFromRecord(rec)
+    separated = rec[1].decode('utf-8').split('\0')
+    pk = rec[0].decode('utf-8')
+    separated.insert(0, pk)
+    return separated
 
 def getValuesByPk(tablename, val):
     data = db.DB()

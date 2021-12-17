@@ -6,4 +6,5 @@ def getTablePk(tablename):
     return tablesInfo[tablename][0]
 
 def getTableColumns(tablename):
-    return tablesInfo[tablename][1]
+    return [getTablePk(tablename)] + \
+        tablesInfo[tablename][1]

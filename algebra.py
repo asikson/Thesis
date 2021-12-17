@@ -53,7 +53,7 @@ class Join:
                 r = self.right.get(k)
                 if r != 1:
                     yield l.copy().concat(r)
-        print('Join cost: ' + str(self.cost))
+        #print('Join cost: ' + str(self.cost))
         self.cost += self.left.cost + self.right.cost
 
 class CrossProduct:
@@ -67,7 +67,7 @@ class CrossProduct:
             for r in self.right:
                 self.cost += 1
                 yield l.copy().concat(r)
-        print('Cross cost: ' + str(self.cost))
+        #print('Cross cost: ' + str(self.cost))
         self.cost += self.left.cost + self.right.cost
 
 class Read:
@@ -77,12 +77,13 @@ class Read:
         self.cost = 0
 
     def __iter__(self):
+        columns = info.getTableColumns(self.tablename)
         for rec in brk.tableIterator(self.tablename):
             self.cost += 1
             yield row.Row.rowFromRecord(self.alias, 
-                info.getTableColumns(self.tablename), 
+                columns, 
                 brk.getValuesFromRecord(rec))
-        print('Read cost: ' + str(self.cost))
+        #print('Read cost: ' + str(self.cost))
 
 class ReadPkDict:
     def __init__(self, outputTable):

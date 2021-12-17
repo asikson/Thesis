@@ -6,7 +6,7 @@ def isWhitespace(token):
 
 def isSelectKeyword(token):
     return (token.ttype == sqlp.tokens.Keyword.DML
-        and token._get_repr_value() == 'SELECT')
+        and str(token) == 'SELECT')
 
 def isIdentifier(token):
     return isinstance(token, sqlp.sql.Identifier)
@@ -22,14 +22,14 @@ def isWildcard(token):
 
 def isFromKeyword(token):
     return (token.ttype == sqlp.tokens.Keyword
-        and token._get_repr_value() == 'FROM')
+        and str(token) == 'FROM')
 
 def isWhere(token):
     return isinstance(token, sqlp.sql.Where)
 
 def isWhereKeyword(token):
     return (token.ttype == sqlp.tokens.Keyword
-        and token._get_repr_value() == 'WHERE')
+        and str(token) == 'WHERE')
 
 def isTokenList(token):
     return isinstance(token, sqlp.sql.TokenList)
@@ -81,10 +81,10 @@ def findIdentifiersOrNumbers(i, tokens):
 # getting names
 def getNamesFromId(identifier):
     if isTokenList(identifier):
-        return tuple([i._get_repr_value()
+        return tuple([str(i)
             for i in identifier.tokens if i.ttype == sqlp.tokens.Name])
     else:
-        return tuple(identifier._get_repr_value())
+        return tuple(str(identifier))
 
 def getNamesFromIdList(identifierList):
     return [getNamesFromId(i) for i in identifierList.get_identifiers()]
@@ -92,13 +92,13 @@ def getNamesFromIdList(identifierList):
 def getTablesFromId(identifier):
     if isTokenList(identifier):
         return tuple(
-            [i._get_repr_value() for i in identifier.tokens if i.ttype == sqlp.tokens.Name]
-                + [i.tokens[0]._get_repr_value() for i in identifier.tokens if isIdentifier(i)])
+            [str(i) for i in identifier.tokens if i.ttype == sqlp.tokens.Name]
+                + [str(i.tokens[0]) for i in identifier.tokens if isIdentifier(i)])
     else:
-        return tuple(identifier._get_repr_value())
+        return tuple(str(identifier))
 
 def getTablesFromIdList(identifierList):
     return [getTablesFromId(i) for i in identifierList.get_identifiers()]
 
 def getValueFromIdentifier(identifier):
-    return identifier._get_repr_value()
+    return str(identifier)

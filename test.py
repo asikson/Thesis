@@ -3,8 +3,8 @@ import evaluator as ev
 import planning as pl
 
 sql = 'select s.name, s.surname, s.age, c.name \
-    from students s, cities c \
-    where s.city = c.id \
+    from cities c, students s \
+    where c.id = s.city \
         and s.age > 25'
 
 formatted = sqlp.format(sql, keyword_case='upper')
