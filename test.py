@@ -2,10 +2,10 @@ import sqlparse as sqlp
 import evaluator as ev
 import planning as pl
 
-sql = 'select s.name, s.surname, s.age, c.name \
-    from cities c, students s \
-    where c.id = s.city \
-        and s.age > 25'
+sql = 'select c.name, s.name, s.surname, s.age, t.name, t.surname \
+    from cities c, students s, teachers t \
+    where s.city = t.city \
+        and s.age < 23'
 
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]

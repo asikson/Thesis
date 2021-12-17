@@ -80,7 +80,7 @@ class Read:
         columns = info.getTableColumns(self.tablename)
         for rec in brk.tableIterator(self.tablename):
             self.cost += 1
-            yield row.Row.rowFromRecord(self.alias, 
+            yield row.Row.rowFromRecord(self.alias,
                 columns, 
                 brk.getValuesFromRecord(rec))
         #print('Read cost: ' + str(self.cost))
