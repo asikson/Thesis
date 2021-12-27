@@ -26,8 +26,11 @@ class Plan:
             return tables[0]
     
     def joinTwoTables(self, left, right, predicate):
-        return ra.Join(left, right, 
-            predicate.left, predicate.right)
+        if isinstance(right, ra.ReadPkDict):
+            return ra.Join(left, right, [], predicate.left)
+        else:
+            return ra.Join(left, right, 
+                [(predicate.left, predicate.right)], '')
 
     def selectionPushdown(self):
         selections = []
@@ -55,7 +58,6 @@ class Plan:
             if t not in [p[0] for p in toJoin]]
 
         return toJoin, tablesLeft, predsWithVal
-
 
     def execute(self):
         if self.mode == 'cross_all':

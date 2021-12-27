@@ -28,5 +28,7 @@ def getValuesByPk(tablename, val):
     key = bytes(val, 'utf-8')
     val = data.get(key)
     data.close()
+    if val is None:
+        return -1
 
     return getValuesFromRecord((key, val))
