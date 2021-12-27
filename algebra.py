@@ -12,8 +12,11 @@ class Projection:
     def __iter__(self):
         for rec in self.data:
             self.cost += 1
-            yield rec.copy().project(self.fields)
-        print('Projection cost: ' + str(self.cost))
+            if self.wildcard:
+                yield rec
+            else:
+                yield rec.copy().project(self.fields)
+        #print('Projection cost: ' + str(self.cost))
         self.cost += self.data.cost
 
 class Selection:
@@ -27,7 +30,7 @@ class Selection:
             self.cost += 1
             if rec.select(self.predicates):
                 yield rec
-        print('Selection cost: ' + str(self.cost))
+        #print('Selection cost: ' + str(self.cost))
         self.cost += self.data.cost
 
 class Join:

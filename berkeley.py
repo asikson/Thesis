@@ -19,11 +19,12 @@ def getValuesFromRecord(rec):
     separated = rec[1].decode('utf-8').split('\0')
     pk = rec[0].decode('utf-8')
     separated.insert(0, pk)
+
     return separated
 
 def getValuesByPk(tablename, val):
     data = db.DB()
-    data = data.open(tablename, dbtype=db.DB_HASH, flags=db.DB_DIRTY_READ)
+    data.open(tablename, dbtype=db.DB_HASH, flags=db.DB_DIRTY_READ)
     val = bytes(val, 'utf-8')
 
-    return getValuesFromRecord(data.get(val))
+    return getValuesFromRecord((val, data.get(val)))

@@ -90,12 +90,9 @@ def getNamesFromIdList(identifierList):
     return [getNamesFromId(i) for i in identifierList.get_identifiers()]
 
 def getTablesFromId(identifier):
-    if isTokenList(identifier):
-        return tuple(
-            [str(i) for i in identifier.tokens if i.ttype == sqlp.tokens.Name]
-                + [str(i.tokens[0]) for i in identifier.tokens if isIdentifier(i)])
-    else:
-        return tuple(str(identifier))
+    return tuple(
+        [str(i) for i in identifier.tokens if i.ttype == sqlp.tokens.Name]
+            + [str(i.tokens[0]) for i in identifier.tokens if isIdentifier(i)])
 
 def getTablesFromIdList(identifierList):
     return [getTablesFromId(i) for i in identifierList.get_identifiers()]

@@ -2,8 +2,6 @@ import algebra as ra
 import functools as ft
 import info
 
-from info import getTablePk
-
 class Plan:
     def __init__(self, queryOutput, mode):
         self.fields, self.predicates, self.tables = queryOutput.get()
@@ -70,15 +68,24 @@ class Plan:
             print('Unknown mode')
 
     def printResult(self, result, info):
+        numOfRecords = 0
         for rec in result:
             print(rec)
+            numOfRecords += 1
         print('Cost of ' + info + str(result.cost))
+        print('Number of records: ', numOfRecords)
 
     # crossing all tables and selecting rows
     def executeCrossAll(self):
         reads = self.readTables(self.tables)
-        crosses = self.crossTables(reads)
-        result = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
+        if len(reads) > 1:
+            crosses = self.crossTables(reads)
+        else:
+            crosses = reads[0]
+        if len(self.predicates) > 0:
+            result = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
+        else:
+            result = ra.Projection(self.fields, crosses)
 
         self.printResult(result, 'crossing all: ')
 

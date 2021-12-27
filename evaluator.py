@@ -28,7 +28,7 @@ def evaluateStatement(tokens):
     # TABLES
     i = tt.skipWhitespaces(i, tokens) 
     if tt.isIdentifier(tokens[i]): 
-        tables = tt.getTablesFromId(tokens[i])
+        tables = [tt.getTablesFromId(tokens[i])]
     elif tt.isIdentifierList(tokens[i]):
         tables = tt.getTablesFromIdList(tokens[i])
     else:
@@ -40,7 +40,7 @@ def evaluateStatement(tokens):
     # WHERE
     i = tt.skipWhitespaces(i, tokens) 
     if i == len(tokens):
-        out.evaluatorOutput(fields, [], tables)
+        return out.evaluatorOutput(fields, [], tables)
     if tt.isWhere(tokens[i]):
         predicates = evaluateWhere(tokens[i].tokens)
     else:
