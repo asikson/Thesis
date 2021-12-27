@@ -1,13 +1,15 @@
 from bsddb3 import db
-from random import randrange
+from random import randrange, shuffle
 
 numOfEmp = 1000
-numOfDep = 10
-numOfCities = 50
+numOfDept = 50
+numOfCities = 100
 numOfFirstNames = 300
 numOfLastNames = 500
-lowestAge = 20
-highestAge = 40
+minAge = 20
+maxAge = 40
+minSalary = 3500
+maxSalary = 10000
 
 # SAMPLES
 samplesPath = '/home/asikson/Pulpit/inż/Thesis/sample_data/'
@@ -22,8 +24,8 @@ def getRandomSample(samples):
 # employees
 def generateEmpData():
     filename = 'employees'
-    employeesDB = db.DB()
-    employeesDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    empDB = db.DB()
+    empDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     f_names = getNSamplesFromFile(numOfFirstNames, 'first_names')
     l_names = getNSamplesFromFile(numOfLastNames, 'last_names')
@@ -34,13 +36,13 @@ def generateEmpData():
         values = '{first_name}\0{last_name}\0{age}\0{gender}'.format(
             first_name = fn,
             last_name = getRandomSample(l_names),
-            age = randrange(highestAge - lowestAge) + lowestAge,
+            age = randrange(maxAge - minAge) + minAge,
             gender = 'F' if fn[-1] == 'a' else 'M'
         )
 
-        employeesDB.put(bytes(str(i+1), 'utf-8'), values)
+        empDB.put(bytes(str(i+1), 'utf-8'), values)
 
-    employeesDB.close()
+    empDB.close()
 
 # cities
 def generateCitiesData():
@@ -58,21 +60,80 @@ def generateCitiesData():
 # departments
 def generateDeptData():
     filename = 'departments'
-    departmentsDB = db.DB()
-    departmentsDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    deptDB = db.DB()
+    deptDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
-    dept_names = getNSamplesFromFile(numOfDep, 'plant_names')
+    dept_names = getNSamplesFromFile(numOfDept, 'plant_names')
     i = 1
     for n in dept_names:
         values = '{dept_name}\0{city_id}'.format(
             dept_name = n,
             city_id = randrange(numOfCities) + 1
         )
-        departmentsDB.put(bytes(str(i), 'utf-8'), values)
+        deptDB.put(bytes(str(i), 'utf-8'), values)
         i += 1
 
-    departmentsDB.close()
+    deptDB.close()
+
+# dept - emp
+def generateDeptEmpData():
+    filename = 'dept_emp'
+    deptEmpDB = db.DB()
+    deptEmpDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+
+    i = 0
+    for emp in range(numOfEmp):
+        values = '{dept_id}\0{emp_id}'.format(
+            dept_id = randrange(numOfDept) + 1,
+            emp_id = emp + 1)
+        deptEmpDB.put(bytes(str(i), 'utf-8'), values)
+        i += 1
+
+    deptEmpDB.close()
+
+# salaries
+def generateSalariesData():  
+    filename = 'salaries'
+    salariesDB = db.DB()
+    salariesDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+
+    i = 0
+    for emp in range(numOfEmp):
+        values = '{salary}\0{emp_id}'.format(
+            salary = randrange(maxSalary - minSalary) + minSalary,
+            emp_id = emp + 1)
+        salariesDB.put(bytes(str(i), 'utf-8'), values)
+        i += 1
+
+    salariesDB.close()
+
+# dept - manager
+def generateDeptManagerData():
+    filename = 'dept_manager'
+    deptManagerDB = db.DB()
+    deptManagerDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+
+    emp = [*range(numOfEmp)]
+    shuffle(emp)
+    emp = emp[:numOfDept]
+
+    i = 0
+    for d in range(numOfDept):
+        values = '{dept_id}\0{emp_id}'.format(
+            dept_id = d + 1,
+            emp_id = emp[i] + 1
+        )
+
+        i += 1
+        deptManagerDB.put(bytes(str(i), 'utf-8'), values)
+
+    deptManagerDB.close()
 
 ######################################################################
 
+generateEmpData()
+generateCitiesData()
 generateDeptData()
+generateDeptEmpData()
+generateDeptManagerData()
+generateSalariesData()

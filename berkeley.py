@@ -25,6 +25,8 @@ def getValuesFromRecord(rec):
 def getValuesByPk(tablename, val):
     data = db.DB()
     data.open(tablename, dbtype=db.DB_HASH, flags=db.DB_DIRTY_READ)
-    val = bytes(val, 'utf-8')
+    key = bytes(val, 'utf-8')
+    val = data.get(key)
+    data.close()
 
-    return getValuesFromRecord((val, data.get(val)))
+    return getValuesFromRecord((key, val))

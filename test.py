@@ -2,8 +2,16 @@ import sqlparse as sqlp
 import evaluator as ev
 import planning as pl
 
-sql = 'select * from departments d, cities c \
-    where d.city_id = c.city_id'
+sql = 'select e.first_name, e.last_name, d.dept_name, c.city_name \
+    from employees e, dept_emp de, \
+    departments d, cities c \
+    where e.emp_id = de.emp_id \
+        and de.dept_id = d.dept_id \
+        and d.city_id = c.city_id'
+
+sql = 'select * from employees e, salaries s \
+    where e.emp_id = s.emp_id \
+        and s.salary > 8000'
 
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
@@ -12,14 +20,5 @@ statement = sqlp.parse(formatted)[0]
 
 output = ev.evaluateStatement(statement.tokens)
 
-plan1 = pl.Plan(output, 'cross_all')
-plan1.execute()
-
-print()
-
-plan2 = pl.Plan(output, 'selection_pushdown')
-plan2.execute()
-
-print()
-plan3 = pl.Plan(output, 'apply_joins')
-plan3.execute()
+plan = pl.Plan(output, 'apply_joins')
+plan.execute()

@@ -14,8 +14,8 @@ tablesInfo['cities'] = ('city_id',
     ['city_name'])
 
 tablesInfo['dept_emp'] = ('id',
-    ['emp_id',
-    'dept_id'])
+    ['dept_id',
+    'emp_id'])
 
 tablesInfo['salaries'] = ('id',
     ['salary',
