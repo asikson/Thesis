@@ -77,31 +77,6 @@ class Plan:
         print('Cost of ' + info + str(result.cost))
         print('Number of records: ', numOfRecords)
 
-    # crossing all tables and selecting rows
-    def executeCrossAll(self):
-        reads = self.readTables(self.tables)
-        if len(reads) > 1:
-            crosses = self.crossTables(reads)
-        else:
-            crosses = reads[0]
-        if len(self.predicates) > 0:
-            result = ra.Projection(self.fields, ra.Selection(self.predicates, crosses))
-        else:
-            result = ra.Projection(self.fields, crosses)
-
-        self.printResult(result, 'crossing all: ')
-
-    # selection pushdown
-    def executeSelectionPushdown(self):
-        selections, self.tables, self.predicates = self.selectionPushdown()
-        reads = self.readTables(self.tables)
-        crosses = self.crossTables(selections + reads)
-
-        result = ra.Projection(self.fields, 
-            ra.Selection(self.predicates, crosses))
-
-        self.printResult(result, 'selection pushdown: ')
-
     # apply joins where possible
     def executeApplyJoins(self):
         toJoin, self.tables, self.predicates = self.applyJoins()

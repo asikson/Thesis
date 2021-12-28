@@ -1,5 +1,6 @@
 from bsddb3 import db
 from random import randrange, shuffle
+from berkeley import dbPath
 
 numOfEmp = 1000
 numOfDept = 50
@@ -25,7 +26,7 @@ def getRandomSample(samples):
 def generateEmpData():
     filename = 'employees'
     empDB = db.DB()
-    empDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    empDB.open(dbPath(filename), dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     f_names = getNSamplesFromFile(numOfFirstNames, 'first_names')
     l_names = getNSamplesFromFile(numOfLastNames, 'last_names')
@@ -48,7 +49,7 @@ def generateEmpData():
 def generateCitiesData():
     filename = 'cities'
     citiesDB = db.DB()
-    citiesDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    citiesDB.open(dbPath(filename), dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     cities = getNSamplesFromFile(numOfCities, 'cities')
     i = 1
@@ -61,7 +62,7 @@ def generateCitiesData():
 def generateDeptData():
     filename = 'departments'
     deptDB = db.DB()
-    deptDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    deptDB.open(dbPath(filename), dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     dept_names = getNSamplesFromFile(numOfDept, 'plant_names')
     i = 1
@@ -79,7 +80,7 @@ def generateDeptData():
 def generateDeptEmpData():
     filename = 'dept_emp'
     deptEmpDB = db.DB()
-    deptEmpDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    deptEmpDB.open(dbPath(filename), dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     i = 0
     for emp in range(numOfEmp):
@@ -95,7 +96,7 @@ def generateDeptEmpData():
 def generateSalariesData():  
     filename = 'salaries'
     salariesDB = db.DB()
-    salariesDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    salariesDB.open(dbPath(filename), dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     i = 0
     for emp in range(numOfEmp):
@@ -111,7 +112,7 @@ def generateSalariesData():
 def generateDeptManagerData():
     filename = 'dept_manager'
     deptManagerDB = db.DB()
-    deptManagerDB.open(filename, dbtype=db.DB_HASH, flags=db.DB_CREATE)
+    deptManagerDB.open(dbPath(filename), dbtype=db.DB_HASH, flags=db.DB_CREATE)
 
     emp = [*range(numOfEmp)]
     shuffle(emp)
