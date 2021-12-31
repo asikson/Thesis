@@ -5,7 +5,7 @@ def evaluateStatement(tokens):
     # SELECT
     i = tt.skipWhitespaces(-1, tokens)
     if not tt.isSelectKeyword(tokens[i]):
-        return -1 
+        return -1
 
     # FIELDS
     i = tt.skipWhitespaces(i, tokens)
@@ -19,7 +19,7 @@ def evaluateStatement(tokens):
         return -1 
 
     fields = list(map(lambda f: out.Field(f[1], f[0]), fields))
-    
+
     # FROM
     i = tt.skipWhitespaces(i, tokens)
     if not tt.isFromKeyword(tokens[i]):
@@ -45,6 +45,16 @@ def evaluateStatement(tokens):
         predicates = evaluateWhere(tokens[i].tokens)
     else:
         return -1
+
+    # aliases' translation
+    tablesDict = dict()
+    for t in tables:
+        tablesDict[t.alias] = t.name
+    for f in fields:
+        f.tablename = tablesDict[f.tablename]
+    for p in predicates:
+        p.left.tablename = tablesDict[p.left.tablename]
+        p.right.tablename = tablesDict[p.right.tablename]
 
     return out.evaluatorOutput(fields, predicates, tables)
     
