@@ -59,11 +59,11 @@ class Join:
             self.estCost = self.left.estCost + self.right.estCost + self.left.estSize
             r = 1.0 if self.predicates == [] \
                 else prod(list(map(ms.reductionFactor, predicates)))
-            self.estSize = self.left.estSize * r
+            self.estSize = r * self.left.estSize
         else:
             self.estCost = self.left.estCost + self.right.estCost + \
                 (self.left.estSize * self.right.estSize)
-            self.estSize = 0.1 * self.estCost
+            self.estSize = self.right.reductionFactor * 0.1 * self.estCost
 
     def __iter__(self):
         if isinstance(self.right, ReadPkDict):
@@ -89,7 +89,7 @@ class Join:
 
     def __str__(self):
         result = '(' + self.left.__str__() + ')\nJOIN ' + self.right.__str__() + \
-            ' ON ' + ','.join(list(map(str, self.predicates)))
+            ' ON ' + ', '.join(list(map(str, self.predicates)))
         if self.fk is not None:
             result += ' (by fk: ' + self.fk.__str__() + ')'
         
@@ -123,6 +123,7 @@ class Read:
         self.cost = 0
         self.estCost = ms.getStatistics(self.tablename).tablesize
         self.estSize = self.estCost
+        self.reductionFactor = 1.0
 
     def __iter__(self):
         columns = info.getTableColumns(self.tablename)
@@ -160,7 +161,8 @@ class ReadWithSelection:
         self.predicates = predicates
         self.cost = 0
         self.estCost = ms.getStatistics(self.tablename).tablesize
-        self.estSize = prod(list(map(ms.reductionFactor, predicates))) * self.estCost
+        self.reductionFactor = prod(list(map(ms.reductionFactor, predicates)))
+        self.estSize = self.reductionFactor * self.estCost
 
     def __iter__(self):
         columns = info.getTableColumns(self.tablename)
@@ -170,7 +172,7 @@ class ReadWithSelection:
                 columns, 
                 brk.getValuesFromRecord(rec))
             if input.select(self.predicates):
-                yield 
+                yield input
 
     def __str__(self):
         return 'Read (' + self.tablename + ')' + \

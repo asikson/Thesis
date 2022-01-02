@@ -1,6 +1,6 @@
+from functools import partialmethod
 from sqlparse.tokens import Newline
 import algebra as ra
-import functools as ft
 import output as out
 import info
 from math import inf
@@ -9,14 +9,6 @@ class Plan:
     def __init__(self, queryOutput, acc):
         self.fields, self.predicates, self.tables = queryOutput.get()
         self.acc = acc
-
-    def printResult(self, result):
-        numOfRecords = 0
-        for rec in result:
-            print(rec)
-            numOfRecords += 1
-        print('Cost: ' + str(result.cost))
-        print('Number of records: ', numOfRecords)
 
     def listDiff(self, list1, list2):
         result = []
@@ -41,13 +33,9 @@ class Plan:
             return field2, field1
 
     def singleRelationPreds(self, table):
-        chosen = list(filter(
+        return list(filter(
             lambda p: p.withValue and p.left.tablename == table.name, 
             self.predicates))
-        not_chosen = list(filter(
-            lambda p: p not in chosen, self.predicates))
-
-        return chosen, not_chosen
 
     def commonPredicates(self, table1, table2):
         names = [table1.name, table2.name]
@@ -55,26 +43,27 @@ class Plan:
             lambda p: not p.withValue and p.left.tablename in names
                 and p.right.tablename in names,
             self.predicates))
-        
-        not_chosen = list(filter(
-            lambda p: p not in chosen, self.predicates))
 
-        return chosen, not_chosen
+        return chosen
 
     def predicatesIncluding(self, table):
-        names = list(map(lambda t: t.name, self.tables))
-        chosen = list(filter(
+        names = self.listDiff(list(map(lambda t: t.name, self.tables)), [table.name])
+        return list(filter(
             lambda p: not p.withValue and \
-                p.left.tablename not in names and \
-                p.right.tablename not in names,
+                (p.left.tablename == table.name or \
+                    p.right.tablename == table.name) \
+                and p.left.tablename not in names \
+                and p.right.tablename not in names,
             self.predicates))
-        not_chosen = list(filter(
-            lambda p: p not in chosen, self.predicates))
 
-        return chosen, not_chosen
+    def predicatesToApply(self):
+        names = list(map(lambda t: t.name), self.tables)
+        return list(filter(lambda p: not p.withValue
+            and p.left.tablename not in names 
+            and p.right.tablename not in names))
 
     def singleRelation(self, table):
-        chosen, _ = self.singleRelationPreds(table)
+        chosen = self.singleRelationPreds(table)
 
         if chosen == []:
             return table, chosen, ra.Read(table)
@@ -97,9 +86,9 @@ class Plan:
     def twoRelationPlan(self, rel1, rel2):
         table1, chosen1, read1 = rel1
         table2, chosen2, read2 = rel2
-        common, not_common = self.commonPredicates(table1, table2)
-        preds_left = self.listDiff(not_common, chosen1 + chosen2)
         tables_left = self.listDiff(self.tables, [table1, table2])
+        common = self.commonPredicates(table1, table2)
+        preds_left = self.listDiff(self.predicates, chosen1 + chosen2 + common)
         newOutput = out.evaluatorOutput(self.fields, preds_left, tables_left)
 
         if common == []:
@@ -123,10 +112,10 @@ class Plan:
 
     def joinTable(self, table):
         table, chosen, read = self.singleRelation(table)
-        self.tables = self.listDiff(self.tables, [table])
-        common, not_common = self.predicatesIncluding(table)
+        tables_left = self.listDiff(self.tables, [table])
+        common = self.predicatesIncluding(table)
         preds_left = self.listDiff(self.predicates, common + chosen)
-        newOutput = out.evaluatorOutput(self.fields, preds_left, self.tables)
+        newOutput = out.evaluatorOutput(self.fields, preds_left, tables_left)
 
         if common == []:
             return Plan(newOutput, ra.CrossProduct(self.acc, read))
@@ -152,13 +141,12 @@ class Plan:
         return result
 
     def rehash(self):
-        if len(self.tables) == 1:
-            result = self.joinTable(self.tables[0])
-            if result.predicates != []:
-                newAcc = ra.Projection(result.fields, 
-                    ra.Selection(result.predicates, result.acc))
-            else:
-                newAcc = ra.Projection(result.fields, result.acc)
+        if len(self.tables) == 0:
+            newAcc = self.acc
+            if self.predicates != []:
+                newAcc = ra.Selection(self.predicates, newAcc)
+            if self.fields != []:
+                newAcc = ra.Projection(self.fields, newAcc)
             
             emptyOutput = out.evaluatorOutput([], [], [])
             return Plan(emptyOutput, newAcc)
@@ -166,20 +154,26 @@ class Plan:
             return list(map(lambda p: p.rehash(),
                 [self.joinTable(t) for t in self.tables]))
     
-    def estimation(self):
+    def bestPlans(self, n):
         singleRels = self.pass1()
         twoRelPlans = self.pass2(singleRels)
 
         rehashed = list(map(lambda p: p.rehash(), twoRelPlans))
         flattened = self.multiFlatten(rehashed)
+        flattened = sorted(flattened, key=lambda p: p.acc.estCost)
 
-        minCost = inf
-        bestPlan = None
-        for p in flattened:
-            if p.acc.estCost < minCost:
-                minCost = p.acc.estCost
-                bestPlan = p
-        
-        print(bestPlan.acc)
-        print('Estimated cost: ' + str(minCost))
-        self.printResult(bestPlan.acc)
+        return flattened[:n]
+
+def printResult(result):
+    numOfRecords = 0
+    for rec in result:
+        print(rec)
+        numOfRecords += 1
+    print('Cost: ' + str(result.cost))
+    print('Number of records: ', numOfRecords)
+
+def executePlan(plan):
+    print(plan.acc)
+    print('Estimated cost: ' + str(plan.acc.estCost))
+    printResult(plan.acc)
+    print()

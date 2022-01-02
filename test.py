@@ -11,7 +11,8 @@ sql = 'select e.last_name, d.dept_name, \
         and d.city_id = c.city_id \
         and e.gender = ''F'' \
         and e.emp_id = s.emp_id \
-        and s.salary > 8000'
+        and s.salary > 9000'
+
 
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
@@ -21,4 +22,5 @@ statement = sqlp.parse(formatted)[0]
 output = ev.evaluateStatement(statement.tokens)
 
 plan = pl.Plan(output, None)
-plan.estimation()
+for p in plan.bestPlans(5):
+    pl.executePlan(p)

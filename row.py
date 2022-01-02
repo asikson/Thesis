@@ -1,7 +1,5 @@
 import functools as ft
 
-from sqlparse.tokens import String
-
 class Row:
     def __init__(self):
         self.values = dict()
@@ -56,7 +54,7 @@ class Row:
             rightVal = self.valueForField(predicate.right)
 
         if not isinstance(rightVal, str):
-            leftVal = float(leftVal)
+            leftVal = int(leftVal)
     
         if predicate.operator == '=':
             return leftVal == rightVal
