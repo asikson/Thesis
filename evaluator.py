@@ -54,7 +54,8 @@ def evaluateStatement(tokens):
         f.tablename = tablesDict[f.tablename]
     for p in predicates:
         p.left.tablename = tablesDict[p.left.tablename]
-        p.right.tablename = tablesDict[p.right.tablename]
+        if not p.withValue:
+            p.right.tablename = tablesDict[p.right.tablename]
 
     return out.evaluatorOutput(fields, predicates, tables)
     

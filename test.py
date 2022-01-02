@@ -2,14 +2,16 @@ import sqlparse as sqlp
 import evaluator as ev
 import planning as pl
 
-sql = 'select e.emp_id, e.last_name, \
-        de.emp_id, de.dept_id, d.dept_id, d.dept_name, \
-        c.city_name \
+sql = 'select e.last_name, d.dept_name, \
+        c.city_name, s.salary \
     from employees e, dept_emp de, \
-        departments d, cities c \
+        departments d, cities c, salaries s \
     where e.emp_id = de.emp_id \
         and de.dept_id = d.dept_id \
-        and d.city_id = c.city_id'
+        and d.city_id = c.city_id \
+        and e.gender = ''F'' \
+        and e.emp_id = s.emp_id \
+        and s.salary > 8000'
 
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
@@ -18,5 +20,5 @@ statement = sqlp.parse(formatted)[0]
 
 output = ev.evaluateStatement(statement.tokens)
 
-plan = pl.Plan(output, 'apply_joins')
-plan.execute()
+plan = pl.Plan(output, None)
+plan.estimation()
