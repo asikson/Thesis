@@ -32,6 +32,7 @@ class EquiwidthHistogram:
             buckets.append(Bucket(l, r))
             l += self.width
             r += self.width
+        buckets.append(Bucket(l, r))
 
         return buckets
 
@@ -105,7 +106,7 @@ class Statistics:
         value = int(value)
         if not fieldname in self.histograms.keys():
             self.histograms[fieldname] = self.createEquiwidthHistogram(fieldname)
-        return self.histograms[fieldname].factorForValue(value)
+        return self.histograms[fieldname].factorForValue(value) / self.tablesize
 
     def getInequalityFactor(self, fieldname, value, op):
         min, max = self.findMinMax(fieldname)

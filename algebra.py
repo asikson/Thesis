@@ -22,7 +22,8 @@ class Projection:
         self.cost += self.data.cost
 
     def __str__(self):
-        return 'PROJECT: ' + ', '.join(list(map(str, self.fields))) + \
+        return ' -> ' + str(self.estCost) + ' ' + \
+            'PROJECT: ' + ', '.join(list(map(str, self.fields))) + \
             ' on\n(' + self.data.__str__() + ')'
 
 class Selection:
@@ -44,7 +45,8 @@ class Selection:
         self.cost += self.data.cost
 
     def __str__(self):
-        return 'SELECT: ' + ', '.join(list(map(str, self.predicates))) + \
+        return ' -> ' + str(self.estCost) + ' ' + \
+            'SELECT: ' + ', '.join(list(map(str, self.predicates))) + \
             ' from\n(' + self.data.__str__() + ')'
 
 class Join:
@@ -88,7 +90,8 @@ class Join:
         self.cost += self.left.cost + self.right.cost
 
     def __str__(self):
-        result = '(' + self.left.__str__() + ')\nJOIN ' + self.right.__str__() + \
+        result = ' -> ' + str(self.estCost) + ' ' + \
+            '(' + self.left.__str__() + ')\nJOIN ' + self.right.__str__() + \
             ' ON ' + ', '.join(list(map(str, self.predicates)))
         if self.fk is not None:
             result += ' (by fk: ' + self.fk.__str__() + ')'
@@ -115,7 +118,8 @@ class CrossProduct:
         self.cost += self.left.cost + self.right.cost
 
     def __str__(self):
-        return self.left.__str__() + '\nX ' + self.right.__str__()
+        return ' -> ' + str(self.estCost) + ' ' + \
+            self.left.__str__() + '\nX ' + self.right.__str__()
 
 class Read:
     def __init__(self, table):
@@ -134,7 +138,8 @@ class Read:
                 brk.getValuesFromRecord(rec))
 
     def __str__(self):
-        return 'Read (' + self.tablename + ')'
+        return ' -> ' + str(self.estCost) + ' ' + \
+            'Read (' + self.tablename + ')'
 
 class ReadPkDict:
     def __init__(self, table):
@@ -153,7 +158,8 @@ class ReadPkDict:
             return -1
 
     def __str__(self):
-        return 'Read dict (' + self.tablename + ')'
+        return ' -> ' + str(self.estCost) + ' ' + \
+            'Read dict (' + self.tablename + ')'
 
 class ReadWithSelection:
     def __init__(self, table, predicates):
@@ -175,5 +181,6 @@ class ReadWithSelection:
                 yield input
 
     def __str__(self):
-        return 'Read (' + self.tablename + ')' + \
+        return ' -> ' + str(self.estCost) + ' ' + \
+            'Read (' + self.tablename + ')' + \
             ' with ' + ', '.join(list(map(str, self.predicates)))
