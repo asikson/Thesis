@@ -167,7 +167,7 @@ class Plan:
 def printResult(result):
     numOfRecords = 0
     for rec in result:
-        print(rec)
+        #print(rec)
         numOfRecords += 1
     print('Cost: ' + str(result.cost))
     print('Number of records: ', numOfRecords)
