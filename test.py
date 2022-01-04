@@ -11,7 +11,8 @@ sql = 'select e.last_name, d.dept_name, \
         and d.city_id = c.city_id \
         and e.gender = ''F'' \
         and e.emp_id = s.emp_id \
-        and s.salary > 9000'
+        and s.salary > 10000 \
+        and d.dept_name = ''cabbage'''
 
 
 formatted = sqlp.format(sql, keyword_case='upper')

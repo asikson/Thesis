@@ -4,7 +4,7 @@ import info
 from math import inf
 import output
 
-numOfBuckets = 5
+numOfBuckets = 20
 statistics = dict()
 
 class Bucket:
@@ -172,6 +172,5 @@ def reductionFactor(predicate):
             else:
                 return 0.1
 
-
-
-
+stat = getStatistics('departments')
+print(stat.tablesize)

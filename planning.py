@@ -160,20 +160,20 @@ class Plan:
 
         rehashed = list(map(lambda p: p.rehash(), twoRelPlans))
         flattened = self.multiFlatten(rehashed)
-        flattened = sorted(flattened, key=lambda p: p.acc.estCost)
-
+        flattened = sorted(flattened, key=lambda p: p.acc.estCostCumulative)
+        
         return flattened[:n]
 
 def printResult(result):
     numOfRecords = 0
     for rec in result:
-        #print(rec)
+        print(rec)
         numOfRecords += 1
     print('Cost: ' + str(result.cost))
     print('Number of records: ', numOfRecords)
 
 def executePlan(plan):
     print(plan.acc)
-    print('Estimated cost: ' + str(plan.acc.estCost))
+    print('Estimated cost: ' + str(plan.acc.estCostCumulative))
     printResult(plan.acc)
     print()

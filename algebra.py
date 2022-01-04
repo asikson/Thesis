@@ -9,7 +9,8 @@ class Projection:
         self.fields = fields
         self.data = data
         self.cost = 0
-        self.estCost = data.estCost + data.estSize
+        self.estCost = data.estSize
+        self.estCostCumulative = data.estCostCumulative + self.estCost
         self.estSize = data.estSize
 
     def __iter__(self):
@@ -22,16 +23,18 @@ class Projection:
         self.cost += self.data.cost
 
     def __str__(self):
-        return ' -> ' + str(self.estCost) + ' ' + \
-            'PROJECT: ' + ', '.join(list(map(str, self.fields))) + \
-            ' on\n(' + self.data.__str__() + ')'
+        return (
+            'project (' + str(self.estCost) + ', ' + str(self.data.estSize) + ') ' + \
+            ', '.join(list(map(str, self.fields))) + \
+            '\n' + self.data.__str__())
 
 class Selection:
     def __init__(self, predicates, data):
         self.predicates = predicates
         self.data = data
         self.cost = 0
-        self.estCost = data.estCost + data.estSize
+        self.estCost = data.estSize
+        self.estCostCumulative = data.estCostCumulative + self.estCost
         self.estSize = prod(list(map(ms.reductionFactor, predicates))) * data.estSize
 
     def __iter__(self):
@@ -45,9 +48,10 @@ class Selection:
         self.cost += self.data.cost
 
     def __str__(self):
-        return ' -> ' + str(self.estCost) + ' ' + \
-            'SELECT: ' + ', '.join(list(map(str, self.predicates))) + \
-            ' from\n(' + self.data.__str__() + ')'
+        return (
+            'select (' + str(self.estCost) + ', ' + str(self.data.estSize) + ') ' + \
+            ', '.join(list(map(str, self.predicates))) + '\n' + \
+            self.data.__str__())
 
 class Join:
     def __init__(self, left, right, predicates, fk):
@@ -57,15 +61,15 @@ class Join:
         # if right is ReadPkDict
         self.fk = fk
         self.cost = 0
-        if isinstance(self.right, ReadPkDict):
-            self.estCost = self.left.estCost + self.right.estCost + self.left.estSize
-            r = 1.0 if self.predicates == [] \
+        self.predReduction = 1.0 if self.predicates == [] \
                 else prod(list(map(ms.reductionFactor, predicates)))
-            self.estSize = r * self.left.estSize
+        if isinstance(self.right, ReadPkDict):
+            self.estCost = self.left.estSize
+            self.estSize = self.predReduction * self.left.estSize
         else:
-            self.estCost = self.left.estCost + self.right.estCost + \
-                (self.left.estSize * self.right.estSize)
-            self.estSize = self.right.reductionFactor * 0.1 * self.estCost
+            self.estCost = self.left.estSize * self.right.estSize
+            self.estSize = self.predReduction * self.left.estSize * self.right.estSize
+        self.estCostCumulative = left.estCostCumulative + right.estCostCumulative + self.estCost
 
     def __iter__(self):
         if isinstance(self.right, ReadPkDict):
@@ -90,9 +94,12 @@ class Join:
         self.cost += self.left.cost + self.right.cost
 
     def __str__(self):
-        result = ' -> ' + str(self.estCost) + ' ' + \
-            '(' + self.left.__str__() + ')\nJOIN ' + self.right.__str__() + \
-            ' ON ' + ', '.join(list(map(str, self.predicates)))
+        costs = [str(self.estCost), str(self.left.estSize), str(self.right.estSize)]
+        result = self.left.__str__() + \
+            '\njoin (' + ', '.join(costs) + ') ' + \
+            self.right.__str__() + \
+            ' on ' + ', '.join(list(map(str, self.predicates))) + \
+            ' {' + str(self.predReduction) + '}'
         if self.fk is not None:
             result += ' (by fk: ' + self.fk.__str__() + ')'
         
@@ -103,9 +110,9 @@ class CrossProduct:
         self.left = left
         self.right = right
         self.cost = 0
-        self.estCost = self.left.estCost + self.right.estCost + \
-            (self.left.estSize * self.right.estSize)
-        self.estSize = self.estCost
+        self.estCost = self.left.estSize * self.right.estSize
+        self.estSize = self.left.estSize * self.right.estSize
+        self.estCostCumulative = left.estCostCumulative + right.estCostCumulative + self.estCost
 
     def __iter__(self):
         for l in self.left:
@@ -118,8 +125,10 @@ class CrossProduct:
         self.cost += self.left.cost + self.right.cost
 
     def __str__(self):
-        return ' -> ' + str(self.estCost) + ' ' + \
-            self.left.__str__() + '\nX ' + self.right.__str__()
+        costs = [str(self.estCost), str(self.left.estSize), str(self.right.estSize)]
+        return self.left.__str__() + \
+            '\ncross (' + ', '.join(costs) + ') ' + \
+            self.right.__str__()
 
 class Read:
     def __init__(self, table):
@@ -127,7 +136,7 @@ class Read:
         self.cost = 0
         self.estCost = ms.getStatistics(self.tablename).tablesize
         self.estSize = self.estCost
-        self.reductionFactor = 1.0
+        self.estCostCumulative = self.estCost
 
     def __iter__(self):
         columns = info.getTableColumns(self.tablename)
@@ -138,8 +147,8 @@ class Read:
                 brk.getValuesFromRecord(rec))
 
     def __str__(self):
-        return ' -> ' + str(self.estCost) + ' ' + \
-            'Read (' + self.tablename + ')'
+        return 'READ (' + self.tablename + ') ' + \
+            '[' + str(self.estCost) + ']'
 
 class ReadPkDict:
     def __init__(self, table):
@@ -147,6 +156,7 @@ class ReadPkDict:
         self.cost = 0
         self.estCost = 0
         self.estSize = 0
+        self.estCostCumulative = 0
 
     def get(self, pk):
         values = brk.getValuesByPk(self.tablename, pk)
@@ -158,8 +168,7 @@ class ReadPkDict:
             return -1
 
     def __str__(self):
-        return ' -> ' + str(self.estCost) + ' ' + \
-            'Read dict (' + self.tablename + ')'
+        return 'READ dict (' + self.tablename + ')'
 
 class ReadWithSelection:
     def __init__(self, table, predicates):
@@ -169,6 +178,7 @@ class ReadWithSelection:
         self.estCost = ms.getStatistics(self.tablename).tablesize
         self.reductionFactor = prod(list(map(ms.reductionFactor, predicates)))
         self.estSize = self.reductionFactor * self.estCost
+        self.estCostCumulative = self.estCost
 
     def __iter__(self):
         columns = info.getTableColumns(self.tablename)
@@ -181,6 +191,6 @@ class ReadWithSelection:
                 yield input
 
     def __str__(self):
-        return ' -> ' + str(self.estCost) + ' ' + \
-            'Read (' + self.tablename + ')' + \
-            ' with ' + ', '.join(list(map(str, self.predicates)))
+        return'READ with sel. (' + self.tablename + ') ' + \
+            '[' + str(self.estCost) + ']' + \
+            '\nwith ' + ', '.join(list(map(str, self.predicates)))

@@ -2,15 +2,15 @@ from bsddb3 import db
 from random import randrange, shuffle
 from berkeley import dbPath
 
-numOfEmp = 1000
-numOfDept = 50
-numOfCities = 100
-numOfFirstNames = 300
-numOfLastNames = 500
+numOfEmp = 100000
+numOfDept = 5000
+numOfCities = 1000
+numOfFirstNames = 30000
+numOfLastNames = 50000
 minAge = 20
-maxAge = 40
+maxAge = 80
 minSalary = 3500
-maxSalary = 10000
+maxSalary = 20000
 
 # SAMPLES
 samplesPath = '/home/asikson/Pulpit/inż/Thesis/sample_data/'
