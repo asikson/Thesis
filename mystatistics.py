@@ -172,5 +172,3 @@ def reductionFactor(predicate):
             else:
                 return 0.1
 
-stat = getStatistics('departments')
-print(stat.tablesize)

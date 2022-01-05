@@ -3,7 +3,7 @@ from random import randrange, shuffle
 from berkeley import dbPath
 
 numOfEmp = 100000
-numOfDept = 5000
+numOfDept = 660
 numOfCities = 1000
 numOfFirstNames = 30000
 numOfLastNames = 50000

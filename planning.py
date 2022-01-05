@@ -1,13 +1,11 @@
-from functools import partialmethod
-from sqlparse.tokens import Newline
 import algebra as ra
 import output as out
 import info
-from math import inf
 
 class Plan:
     def __init__(self, queryOutput, acc):
-        self.fields, self.predicates, self.tables = queryOutput.get()
+        if queryOutput is not None:
+            self.fields, self.predicates, self.tables = queryOutput.get()
         self.acc = acc
 
     def listDiff(self, list1, list2):
@@ -122,11 +120,11 @@ class Plan:
         else:
             for c in common:
                 f, fk = self.matchField(c, table)
-                if info.isTablesPk(table.name, f):
+                if info.isTablesPk(table.name, f.name):
                     read = ra.ReadPkDict(table)
                     predsForJoin = self.listDiff(common, [c]) + chosen
                     return Plan(newOutput, ra.Join(self.acc, read, predsForJoin, fk))
-            
+
             return Plan(newOutput, ra.Join(self.acc, read, common, None))
 
     def multiFlatten(self, ls):
@@ -147,15 +145,16 @@ class Plan:
                 newAcc = ra.Selection(self.predicates, newAcc)
             if self.fields != []:
                 newAcc = ra.Projection(self.fields, newAcc)
-            
-            emptyOutput = out.evaluatorOutput([], [], [])
-            return Plan(emptyOutput, newAcc)
+
+            return Plan(None, newAcc)
         else: 
             return list(map(lambda p: p.rehash(),
                 [self.joinTable(t) for t in self.tables]))
     
     def bestPlans(self, n):
         singleRels = self.pass1()
+        if len(singleRels) == 1:
+            return [Plan(None, singleRels[0][2])]
         twoRelPlans = self.pass2(singleRels)
 
         rehashed = list(map(lambda p: p.rehash(), twoRelPlans))
@@ -167,7 +166,7 @@ class Plan:
 def printResult(result):
     numOfRecords = 0
     for rec in result:
-        print(rec)
+        #print(rec)
         numOfRecords += 1
     print('Cost: ' + str(result.cost))
     print('Number of records: ', numOfRecords)
