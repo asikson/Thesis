@@ -168,7 +168,7 @@ def printResult(result):
     for rec in result:
         #print(rec)
         numOfRecords += 1
-    print('Cost: ' + str(result.cost))
+    print('Cost: ' + str(result.costCumulative))
     print('Number of records: ', numOfRecords)
 
 def executePlan(plan):

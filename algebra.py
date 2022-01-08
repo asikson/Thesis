@@ -9,6 +9,7 @@ class Projection:
         self.fields = fields
         self.data = data
         self.cost = 0
+        self.costCumulative = 0
         self.estCost = data.estSize
         self.estCostCumulative = data.estCostCumulative + self.estCost
         self.estSize = data.estSize
@@ -18,9 +19,11 @@ class Projection:
             self.cost += 1
             yield rec.copy().project(self.fields)
         self.sumUpCost() 
+        #print('Cost of projection: ', self.cost)
+        #print('Cumulative: ', self.costCumulative)
 
     def sumUpCost(self):
-        self.cost += self.data.cost
+        self.costCumulative += self.data.costCumulative + self.cost
 
     def __str__(self):
         return (
@@ -33,6 +36,7 @@ class Selection:
         self.predicates = predicates
         self.data = data
         self.cost = 0
+        self.costCumulative = 0
         self.estCost = data.estSize
         self.estCostCumulative = data.estCostCumulative + self.estCost
         self.estSize = prod(list(map(ms.reductionFactor, predicates))) * data.estSize
@@ -43,9 +47,11 @@ class Selection:
             if rec.select(self.predicates):
                 yield rec
         self.sumUpCost()
+        #print('Cost of selection: ', self.cost)
+        #print('Cumulative: ', self.costCumulative)
 
     def sumUpCost(self):
-        self.cost += self.data.cost
+        self.costCumulative += self.data.costCumulative + self.cost
 
     def __str__(self):
         return (
@@ -61,6 +67,7 @@ class Join:
         # if right is ReadPkDict
         self.fk = fk
         self.cost = 0
+        self.costCumulative = 0
         self.predReduction = 1.0 if self.predicates == [] \
                 else prod(list(map(ms.reductionFactor, predicates)))
         if isinstance(self.right, ReadPkDict):
@@ -89,9 +96,12 @@ class Join:
                     if rec.select(self.predicates):
                         yield rec
         self.sumUpCost()
+        #print('Cost of join: ', self.cost)
+        #print('Cumulative: ', self.costCumulative)
 
     def sumUpCost(self):
-        self.cost += self.left.cost + self.right.cost
+        self.costCumulative += self.left.costCumulative + \
+            self.right.costCumulative + self.cost
 
     def __str__(self):
         costs = [str(self.estCost), str(self.left.estSize), str(self.right.estSize)]
@@ -110,6 +120,7 @@ class CrossProduct:
         self.left = left
         self.right = right
         self.cost = 0
+        self.costCumulative = 0
         self.estCost = self.left.estSize * self.right.estSize
         self.estSize = self.left.estSize * self.right.estSize
         self.estCostCumulative = left.estCostCumulative + right.estCostCumulative + self.estCost
@@ -120,9 +131,12 @@ class CrossProduct:
                 self.cost += 1
                 yield l.copy().concat(r)
         self.sumUpCost()
+        #print('Cost of cross: ', self.cost)
+        #print('Cumulative: ', self.costCumulative)
 
     def sumUpCost(self):
-        self.cost += self.left.cost + self.right.cost
+        self.costCumulative += self.left.costCumulative + \
+            self.right.costCumulative + self.cost
 
     def __str__(self):
         costs = [str(self.estCost), str(self.left.estSize), str(self.right.estSize)]
@@ -134,53 +148,59 @@ class Read:
     def __init__(self, table):
         self.tablename = table.name
         self.cost = 0
+        self.costCumulative = 0
         self.estCost = ms.getStatistics(self.tablename).tablesize
         self.estSize = self.estCost
         self.estCostCumulative = self.estCost
+        self.buffer = []
 
     def __iter__(self):
+        if self.buffer is not None: 
+            if self.buffer == []:
+                self.fillBuffer()
+            for rec in self.buffer:
+                yield rec
+
+    def fillBuffer(self):
         columns = info.getTableColumns(self.tablename)
         for rec in brk.tableIterator(self.tablename):
             self.cost += 1
-            yield row.Row.rowFromRecord(self.tablename,
+            input = row.Row.rowFromRecord(self.tablename,
                 columns, 
                 brk.getValuesFromRecord(rec))
+            self.buffer.append(input)
+        if self.buffer == []:
+            self.buffer = None
+        self.sumUpCost()
+        #print('Cost of read: ', self.cost)
 
     def __str__(self):
         return 'READ (' + self.tablename + ') ' + \
             '[' + str(self.estCost) + ']'
-
-class ReadPkDict:
-    def __init__(self, table):
-        self.tablename = table.name
-        self.cost = 0
-        self.estCost = 0
-        self.estSize = 0
-        self.estCostCumulative = 0
-
-    def get(self, pk):
-        values = brk.getValuesByPk(self.tablename, pk)
-        if values != -1:
-            return row.Row.rowFromRecord(self.tablename,
-                info.getTableColumns(self.tablename),
-                values)
-        else:
-            return -1
-
-    def __str__(self):
-        return 'READ dict (' + self.tablename + ')'
+    
+    def sumUpCost(self):
+        self.costCumulative += self.cost
 
 class ReadWithSelection:
     def __init__(self, table, predicates):
         self.tablename = table.name
         self.predicates = predicates
         self.cost = 0
+        self.costCumulative = 0
         self.estCost = ms.getStatistics(self.tablename).tablesize
         self.reductionFactor = prod(list(map(ms.reductionFactor, predicates)))
         self.estSize = self.reductionFactor * self.estCost
         self.estCostCumulative = self.estCost
+        self.buffer = []
 
     def __iter__(self):
+        if self.buffer is not None: 
+            if self.buffer == []:
+                self.fillBuffer()
+            for rec in self.buffer:
+                yield rec
+
+    def fillBuffer(self):
         columns = info.getTableColumns(self.tablename)
         for rec in brk.tableIterator(self.tablename):
             self.cost += 1
@@ -188,9 +208,50 @@ class ReadWithSelection:
                 columns, 
                 brk.getValuesFromRecord(rec))
             if input.select(self.predicates):
-                yield input
+                self.buffer.append(input)
+        if self.buffer == []:
+            self.buffer = None
+        self.sumUpCost()
+        #print('Cost of read: ', self.cost)
 
     def __str__(self):
         return'READ with sel. (' + self.tablename + ') ' + \
             '[' + str(self.estCost) + ']' + \
             '\nwith ' + ', '.join(list(map(str, self.predicates)))
+
+    def sumUpCost(self):
+        self.costCumulative += self.cost
+
+class ReadPkDict:
+    def __init__(self, table):
+        self.tablename = table.name
+        self.cost = 0
+        self.costCumulative = 0
+        self.estCost = 0
+        self.estSize = 0
+        self.estCostCumulative = 0
+        self.buffer = dict()
+
+    def get(self, pk):
+        if pk in self.buffer.keys():
+            val = self.buffer[pk]
+            if val is None:
+                return -1
+            else:
+                return val
+        else:
+            self.addToBuffer(pk)
+            return self.get(pk)
+    
+    def addToBuffer(self, pk):
+        values = brk.getValuesByPk(self.tablename, pk)
+        if values != -1:
+            input = row.Row.rowFromRecord(self.tablename,
+                info.getTableColumns(self.tablename),
+                values)
+            self.buffer[pk] = input
+        else:
+            self.buffer[pk] = None
+
+    def __str__(self):
+        return 'READ dict (' + self.tablename + ')'
