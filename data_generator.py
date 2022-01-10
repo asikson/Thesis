@@ -3,9 +3,9 @@ from random import randrange, shuffle
 from berkeley import dbPath
 from numpy.random import default_rng
 
-numOfEmp = 100000
+numOfEmp = 1000000
 numOfDept = 660
-numOfCities = 1000
+numOfCities = 10000
 numOfFirstNames = 30000
 numOfLastNames = 50000
 minAge = 20
@@ -40,10 +40,9 @@ def generateEmpData():
         values = '{first_name}\0{last_name}\0{age}\0{gender}'.format(
             first_name = fn,
             last_name = getRandomSample(l_names),
-            age = round(rng.normal(loc=mAge, scale=maxAge - minAge)),
+            age = round(rng.normal(loc=mAge + minAge, scale=mAge/6.0)),
             #age = randrange(maxAge - minAge) + minAge,
-            gender = 'F' if fn[-1] == 'a' else 'M'
-        )
+            gender = 'F' if fn[-1] == 'a' else 'M')
 
         empDB.put(bytes(str(i+1), 'utf-8'), values)
 

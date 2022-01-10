@@ -9,7 +9,8 @@ sql = 'select e.last_name, d.dept_name \
         and de.dept_id = d.dept_id \
         and d.city_id = c.city_id \
         and e.gender = ''F'' \
-        and e.age = 75 \
+        and e.age > 30 \
+        and e.first_name = ''Abubakar''\
         and s.emp_id = e.emp_id \
         and s.salary > 19000'
 
@@ -21,7 +22,7 @@ statement = sqlp.parse(formatted)[0]
 output = ev.evaluateStatement(statement.tokens)
 
 plan = pl.Plan(output, None)
-best = plan.bestPlans(5)
+best = plan.bestPlans(1)
 
 for p in best:
     pl.executePlan(p)

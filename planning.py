@@ -4,6 +4,8 @@ import info
 
 class Plan:
     def __init__(self, queryOutput, acc):
+        if queryOutput == -1:
+            raise Exception('Wrong SQL!')
         if queryOutput is not None:
             self.fields, self.predicates, self.tables = queryOutput.get()
         self.acc = acc
@@ -154,7 +156,7 @@ class Plan:
     def bestPlans(self, n):
         singleRels = self.pass1()
         if len(singleRels) == 1:
-            return [Plan(None, singleRels[0][2])]
+            return [Plan(None, ra.Projection(self.fields, singleRels[0][2]))]
         twoRelPlans = self.pass2(singleRels)
 
         rehashed = list(map(lambda p: p.rehash(), twoRelPlans))
@@ -165,9 +167,10 @@ class Plan:
 
 def printResult(result):
     numOfRecords = 0
-    for rec in result:
-        #print(rec)
-        numOfRecords += 1
+    for buffer in result:
+        for rec in buffer:
+            #print(rec)
+            numOfRecords += 1
     print('Cost: {0}'.format('{:.3f}'.format(
         result.costCumulative)))
     print('Number of records: ', numOfRecords)

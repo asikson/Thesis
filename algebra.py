@@ -4,6 +4,7 @@ import info
 import mystatistics as ms
 from numpy import prod
 
+bufferSize = 100
 
 class Projection:
     def __init__(self, fields, data):
@@ -16,9 +17,16 @@ class Projection:
         self.estSize = data.estSize
 
     def __iter__(self):
-        for rec in self.data:
-            self.cost += 1
-            yield rec.copy().project(self.fields)
+        rowBuffer = []
+        for buffer in self.data:
+            for rec in buffer: 
+                self.cost += 1
+                rowBuffer.append(rec.copy().project(self.fields))
+                if len(rowBuffer) == bufferSize:
+                    yield rowBuffer
+                    rowBuffer = []
+        if len(rowBuffer) == bufferSize:
+            yield rowBuffer
         self.sumUpCost() 
         print(self.costInfo())
 
@@ -52,10 +60,17 @@ class Selection:
         self.estSize = self.estRedFactor * data.estSize
 
     def __iter__(self):
-        for rec in self.data:
-            self.cost += 1
-            if rec.select(self.predicates):
-                yield rec
+        rowBuffer = []
+        for buffer in self.data:
+            for rec in buffer:
+                self.cost += 1
+                if rec.select(self.predicates):
+                    rowBuffer.append(rec)
+                    if len(rowBuffer) == bufferSize:
+                        yield rowBuffer
+                        rowBuffer = []
+        if rowBuffer != []:
+            yield rowBuffer
         self.sumUpCost()
         print(self.costInfo())
 
@@ -112,22 +127,37 @@ class Join:
             return self.estRedFactor * self.left.estSize * self.right.estSize
 
     def __iter__(self):
+        rowBuffer = []
         if self.withDict:
-            for l in self.left:
-                self.cost += 1
-                k = l.valueForField(self.fk)
-                r = self.right.get(k)
-                if r != -1:
-                    rec = l.copy().concat(r)
-                    if rec.select(self.predicates):
-                        yield rec
-        else:
-            for l in self.left:
-                for r in self.right:
+            for lb in self.left:
+                for l in lb:
                     self.cost += 1
-                    rec = l.copy().concat(r)
-                    if rec.select(self.predicates):
-                        yield rec
+                    k = l.valueForField(self.fk)
+                    r = self.right.get(k)
+                    if r != -1:
+                        rec = l.copy().concat(r)
+                        if rec.select(self.predicates):
+                            rowBuffer.append(rec)
+                            if len(rowBuffer) == bufferSize:
+                                yield rowBuffer
+                                rowBuffer = []
+            if rowBuffer != []:
+                yield rowBuffer
+
+        else:
+            for lb in self.left:
+                for rb in self.right:
+                    for l in lb:
+                        for r in rb:
+                            self.cost += 1
+                            rec = l.copy().concat(r)
+                            if rec.select(self.predicates):
+                                rowBuffer.append(rec)
+                                if len(rowBuffer) == bufferSize:
+                                    yield rowBuffer
+                                    rowBuffer = []
+            if rowBuffer != []:
+                yield rowBuffer
         self.sumUpCost()
         print(self.costInfo())
 
@@ -168,10 +198,18 @@ class CrossProduct:
             right.estCostCumulative + self.estCost
 
     def __iter__(self):
-        for l in self.left:
-            for r in self.right:
-                self.cost += 1
-                yield l.copy().concat(r)
+        rowBuffer = []
+        for lb in self.left:
+            for rb in self.right:
+                for l in lb:
+                    for r in rb:
+                        self.cost += 1
+                        rowBuffer.append(l.copy().concat(r))
+                        if len(rowBuffer) == bufferSize:
+                            yield rowBuffer
+                            rowBuffer = []
+        if rowBuffer != []:
+            yield rowBuffer
         self.sumUpCost()
         print(self.costInfo())
 
@@ -204,8 +242,14 @@ class Read:
         if self.buffer is not None: 
             if self.buffer == []:
                 self.fillBuffer()
+            rowBuffer = []
             for rec in self.buffer:
-                yield rec
+                rowBuffer.append(rec)
+                if len(rowBuffer) == bufferSize:
+                    yield rowBuffer
+                    rowBuffer = []
+            if rowBuffer != []:
+                yield rowBuffer
 
     def fillBuffer(self):
         columns = info.getTableColumns(self.tablename)
@@ -252,8 +296,14 @@ class ReadWithSelection:
         if self.buffer is not None: 
             if self.buffer == []:
                 self.fillBuffer()
+            rowBuffer = []
             for rec in self.buffer:
-                yield rec
+                rowBuffer.append(rec)
+                if len(rowBuffer) == bufferSize:
+                    yield rowBuffer
+                    rowBuffer = []
+            if rowBuffer != []:
+                yield rowBuffer
 
     def fillBuffer(self):
         columns = info.getTableColumns(self.tablename)
