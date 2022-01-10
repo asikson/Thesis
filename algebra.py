@@ -20,7 +20,7 @@ class Projection:
             self.cost += 1
             yield rec.copy().project(self.fields)
         self.sumUpCost() 
-        print(self.costInfo)
+        print(self.costInfo())
 
     def costInfo(self):
         return 'Cost of projecting {0}: {1} (est. cost: {2})'.format(

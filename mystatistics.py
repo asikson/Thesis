@@ -1,11 +1,60 @@
-from sqlparse.tokens import Other, String
 import berkeley as brk
 import info
 from math import inf
-import output
+from scipy.stats import chisquare
 
-numOfBuckets = 20
 statistics = dict()
+numOfBuckets = 20
+
+def getStatistics(tablename):
+    if not tablename in statistics.keys():
+        createStatistics(tablename)
+    return statistics[tablename]
+
+def createStatistics(tablename):
+    statistics[tablename] = Statistics(tablename)
+
+def reductionFactor(predicate):
+    # predicates with values
+    if predicate.withValue:
+        tablename, field, op, val = predicate.split()
+        stat = getStatistics(tablename)
+
+        # finding specific values
+        if op == '=':
+            # primary keys
+            if info.isTablesPk(tablename, field):
+                return 1.0 / stat.tablesize
+            # other fields
+            else:
+                t = info.getFieldType(tablename, field)
+                # string fields
+                if t == str:
+                    return 1.0 / stat.countDiffValues(field)
+                # numbers 
+                elif t == int:
+                    value = int(val)
+                    return stat.getHistogramFactorForField(field, value)
+                else:
+                    return - 1
+        # inequalities
+        else:
+            return stat.getInequalityFactor(field, val, op)
+
+    # predicates comparing fields
+    else:
+        tname1, f1, op, tname2, f2 = predicate.split()
+        # foreign keys
+        if info.isForeinKey(tname1, f1, tname2, f2):
+            stat = getStatistics(tname2)
+            return 1.0 / stat.tablesize
+        elif info.isForeinKey(tname2, f2, tname1, f1):
+            stat = getStatistics(tname1)
+            return 1.0 / stat.tablesize
+        # other fields
+        else:
+            return 0.1
+
 
 class Bucket:
     def __init__(self, left, right):
@@ -16,17 +65,22 @@ class Bucket:
     def bump(self):
         self.count += 1
 
+    def __str__(self):
+        return '| ({0} - {1}) {2} |'.format(
+            self.left, self.right, self.count)
+
 class EquiwidthHistogram:
     def __init__(self, min, max, width):
         self.min = min
         self.max = max
         self.width = width
         self.buckets = self.createBuckets()
+        self.cachedValues = dict()
 
     def createBuckets(self):
         buckets = []
         l = self.min - 0.5 
-        r = self.min + self.width + 0.5
+        r = self.min + self.width
 
         while r < self.max:
             buckets.append(Bucket(l, r))
@@ -44,9 +98,22 @@ class EquiwidthHistogram:
                     break
 
     def factorForValue(self, value):
+        if value in self.cachedValues.keys():
+            return self.cachedValues[value]
         for b in self.buckets:
             if value < b.right:
-                return b.count * (1.0 / self.width)
+                fact = b.count * (1.0 / self.width)
+                self.cachedValues[value] = fact
+                return fact
+
+    def checkUniformDist(self):
+        observations = [b.count for b in self.buckets]
+        chisq, p = chisquare(observations)
+        return p >= 0.05
+
+    def printBuckets(self):
+        for b in self.buckets:
+            print(b)
 
 class Statistics:
     def __init__(self, tablename):
@@ -106,7 +173,11 @@ class Statistics:
         value = int(value)
         if not fieldname in self.histograms.keys():
             self.histograms[fieldname] = self.createEquiwidthHistogram(fieldname)
-        return self.histograms[fieldname].factorForValue(value) / self.tablesize
+        histogram = self.histograms[fieldname]
+        if histogram.checkUniformDist():
+            return 1 / self.countDiffValues(fieldname)
+        else:
+            return histogram.factorForValue(value) / self.tablesize
 
     def getInequalityFactor(self, fieldname, value, op):
         min, max = self.findMinMax(fieldname)
@@ -124,51 +195,3 @@ class Statistics:
                 return -1
         else:
             return 0
-
-
-def createStatistics(tablename):
-    statistics[tablename] = Statistics(tablename)
-
-def getStatistics(tablename):
-    if not tablename in statistics.keys():
-        createStatistics(tablename)
-    return statistics[tablename]
-
-def reductionFactor(predicate):
-        operator = predicate.operator
-
-        if predicate.withValue:
-            tablename = predicate.left.tablename
-            field = predicate.left.name
-            value = predicate.right
-            stat = getStatistics(tablename)
-
-            if operator == '=':
-                if info.isTablesPk(tablename, field):
-                    return 1.0 / stat.tablesize
-                else:
-                    t = info.getFieldType(tablename, field)
-                    if t == str:
-                        return 1.0 / stat.countDiffValues(field)
-                    elif t == int:
-                        value = int(value)
-                        return stat.getHistogramFactorForField(field, value)
-                    else:
-                        return - 1
-            else:
-                return stat.getInequalityFactor(field, value, operator)
-        else:
-            tablename1 = predicate.left.tablename
-            field1 = predicate.left.name
-            tablename2 = predicate.right.tablename
-            field2 = predicate.right.name
-
-            if info.isForeinKey(tablename1, field1, tablename2, field2):
-                stat = getStatistics(tablename2)
-                return 1.0 / stat.tablesize
-            elif info.isForeinKey(tablename2, field2, tablename1, field1):
-                stat = getStatistics(tablename1)
-                return 1.0 / stat.tablesize
-            else:
-                return 0.1
-

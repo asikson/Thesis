@@ -14,6 +14,15 @@ class Predicate:
 
         return result
 
+    def split(self):
+        if self.withValue:
+            return self.left.tablename, self.left.name, \
+                self.operator, self.right
+        else:
+            return self.left.tablename, self.left.name, \
+                self.operator, self.right.tablename, \
+                self.right.name
+
 class Table:
     def __init__(self, name, alias):
         self.name = name

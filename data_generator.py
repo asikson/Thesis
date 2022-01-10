@@ -1,6 +1,7 @@
 from bsddb3 import db
 from random import randrange, shuffle
 from berkeley import dbPath
+from numpy.random import default_rng
 
 numOfEmp = 100000
 numOfDept = 660
@@ -33,11 +34,14 @@ def generateEmpData():
 
     for i in range(numOfEmp):
         fn = getRandomSample(f_names)
+        rng = default_rng()
+        mAge = (maxAge - minAge) / 2.0
 
         values = '{first_name}\0{last_name}\0{age}\0{gender}'.format(
             first_name = fn,
             last_name = getRandomSample(l_names),
-            age = randrange(maxAge - minAge) + minAge,
+            age = round(rng.normal(loc=mAge, scale=maxAge - minAge)),
+            #age = randrange(maxAge - minAge) + minAge,
             gender = 'F' if fn[-1] == 'a' else 'M'
         )
 

@@ -173,7 +173,9 @@ def printResult(result):
     print('Number of records: ', numOfRecords)
 
 def executePlan(plan):
+    print('PLAN:')
     print(plan.acc)
+    print('COSTS:')
     print('Estimated cost: {0}'.format(
         '{:.3f}'.format(plan.acc.estCostCumulative)))
     printResult(plan.acc)
