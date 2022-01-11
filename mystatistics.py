@@ -7,12 +7,10 @@ statistics = dict()
 numOfBuckets = 20
 
 def getStatistics(tablename):
-    if not tablename in statistics.keys():
-        createStatistics(tablename)
     return statistics[tablename]
 
-def createStatistics(tablename):
-    statistics[tablename] = Statistics(tablename)
+def createStatistics(tablename, fields):
+    statistics[tablename] = Statistics(tablename, fields)
 
 def reductionFactor(predicate):
     # predicates with values
@@ -24,13 +22,13 @@ def reductionFactor(predicate):
         if op == '=':
             # primary keys
             if info.isTablesPk(tablename, field):
-                return 1.0 / stat.tablesize
+                return 1.0 / stat.getTableSize()
             # other fields
             else:
                 t = info.getFieldType(tablename, field)
                 # string fields
                 if t == str:
-                    return 1.0 / stat.countDiffValues(field)
+                    return 1.0 / stat.getDiffValues(field)
                 # numbers 
                 elif t == int:
                     value = int(val)
@@ -108,7 +106,8 @@ class EquiwidthHistogram:
 
     def checkUniformDist(self):
         observations = [b.count for b in self.buckets]
-        chisq, p = chisquare(observations)
+        _, p = chisquare(observations)
+
         return p >= 0.05
 
     def printBuckets(self):
@@ -116,71 +115,86 @@ class EquiwidthHistogram:
             print(b)
 
 class Statistics:
-    def __init__(self, tablename):
+    def __init__(self, tablename, fields):
         self.tablename = tablename
         self.columns = info.getTableColumns(tablename)
-        self.tablesize = self.getTableSize()
-        self.histograms = dict()
 
-    def valueForField(self, rec, field):
-        idx = self.columns.index(field)
+        # cached info
+        self.tablesize = None
+        self.histograms = dict()
+        self.mins = dict()
+        self.maxes = dict()
+        self.diffValues = dict()
+        self.gatherStatistics(fields)
+
+    def valuesForFields(self, rec, fields):
+        idx = [self.columns.index(f) for f in fields]
         values = brk.getValuesFromRecord(rec)
         
-        return values[idx]
+        return [values[i] for i in idx]
 
-    def getTableSize(self):
-        rows = 0
-        for _ in brk.tableIterator(self.tablename):
-            rows += 1
-        
-        return rows 
+    def getMinMax(self, fieldname):
+        return self.mins[fieldname], self.maxes[fieldname]
 
-    def countDiffValues(self, fieldname):
-        count = 0
-        visited = set()
-
-        for rec in brk.tableIterator(self.tablename):
-            val = self.valueForField(rec, fieldname)
-            if val not in visited:
-                visited.add(val)
-                count += 1
-
-        return count
-
-    def findMinMax(self, fieldname):
-        min, max = inf, -1 * inf
-        for rec in brk.tableIterator(self.tablename):
-            val = int(self.valueForField(rec, fieldname))
-            if val > max:
-                max = val
-            elif val < min:
-                min = val
-
-        return min, max
-
-    def createEquiwidthHistogram(self, fieldname):
-        min, max = self.findMinMax(fieldname)
+    def createEquiwidthHistogram(self, fieldname, values):
+        min, max = self.getMinMax(fieldname)
         width = (max - min) / numOfBuckets
 
         histogram = EquiwidthHistogram(min, max, width)
-        for rec in brk.tableIterator(self.tablename):
-            val = int(self.valueForField(rec, fieldname))
+        for val in values:
             histogram.addValue(val)
         
         return histogram
 
+    def gatherStatistics(self, fields):
+        types = [info.getFieldType(self.tablename, f) for f in fields]
+        self.tablesize = 0
+        visited = dict()
+        valuesForHist = dict()
+
+        for t, f in zip(types, fields):
+            self.diffValues[f] = 0
+            visited[f] = set()
+            if t == int:
+                valuesForHist[f] = []
+                self.mins[f] = inf
+                self.maxes[f] = -1 * inf
+
+        for rec in brk.tableIterator(self.tablename):
+            self.tablesize += 1
+            values = list(zip(fields, types, self.valuesForFields(rec, fields)))
+            
+            for f, t, v in values:
+                if v not in visited[f]:
+                    self.diffValues[f] += 1
+                    visited[f].add(v)
+                if t == int:
+                    v = int(v)
+                    valuesForHist[f].append(v)
+                    if v > self.maxes[f]:
+                        self.maxes[f] = v 
+                    elif v < self.mins[f]:
+                        self.mins[f] = v
+
+        for f, ls in valuesForHist.items():
+            self.histograms[f] = self.createEquiwidthHistogram(f, ls)
+
+    def getTableSize(self):
+        return self.tablesize
+
+    def getDiffValues(self, fieldname):
+        return self.diffValues[fieldname]
+
     def getHistogramFactorForField(self, fieldname, value):
         value = int(value)
-        if not fieldname in self.histograms.keys():
-            self.histograms[fieldname] = self.createEquiwidthHistogram(fieldname)
         histogram = self.histograms[fieldname]
         if histogram.checkUniformDist():
-            return 1 / self.countDiffValues(fieldname)
+            return 1 / self.getDiffValues(fieldname)
         else:
-            return histogram.factorForValue(value) / self.tablesize
+            return histogram.factorForValue(value) / self.getTableSize()
 
     def getInequalityFactor(self, fieldname, value, op):
-        min, max = self.findMinMax(fieldname)
+        min, max = self.getMinMax(fieldname)
         if value >= min and value <= max:
             interval = max - min
             if op == '<':
@@ -195,3 +209,5 @@ class Statistics:
                 return -1
         else:
             return 0
+
+    
