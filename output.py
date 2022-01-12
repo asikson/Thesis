@@ -23,6 +23,14 @@ class Predicate:
                 self.operator, self.right.tablename, \
                 self.right.name
 
+    def orderRightByTable(self, tablename):
+        if self.withValue:
+            return -1
+        elif self.right.tablename != tablename:
+            temp = self.left
+            self.left = self.right
+            self.right = temp
+
 class Table:
     def __init__(self, name, alias):
         self.name = name

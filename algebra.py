@@ -118,7 +118,7 @@ class Join:
         if self.withDict:
             return self.left.estSize
         else:
-            return self.left.estSize * self.right.estSize
+            return self.right.estSize + self.left.estSize #??
 
     def estimateSize(self):
         if self.withDict:
@@ -143,19 +143,35 @@ class Join:
                                 rowBuffer = []
             if rowBuffer != []:
                 yield rowBuffer
-
+        # hash join
         else:
+            hashBuffer = dict()
+            for p in self.predicates:
+                p.orderRightByTable(self.right.tablename)
+            fieldsRight = list(map(
+                lambda p: p.right, self.predicates))
+            fieldsLeft = list(map(
+                lambda p: p.left, self.predicates))
+
+            for rb in self.right:
+                for r in rb:
+                    k = r.valuesForFields(fieldsRight)
+                    if k in hashBuffer.keys():
+                        hashBuffer[k].append(r)
+                    else:
+                        hashBuffer[k] = [r]
+
             for lb in self.left:
-                for rb in self.right:
-                    for l in lb:
-                        for r in rb:
+                for l in lb:
+                    k = l.valuesForFields(fieldsLeft)
+                    if k in hashBuffer.keys():
+                        for v in hashBuffer[k]:
                             self.cost += 1
-                            rec = l.copy().concat(r)
-                            if rec.select(self.predicates):
-                                rowBuffer.append(rec)
-                                if len(rowBuffer) == bufferSize:
-                                    yield rowBuffer
-                                    rowBuffer = []
+                            rec = l.copy().concat(v)
+                            rowBuffer.append(rec)
+                            if len(rowBuffer) == bufferSize:
+                                yield rowBuffer
+                                rowBuffer = []
             if rowBuffer != []:
                 yield rowBuffer
         self.sumUpCost()

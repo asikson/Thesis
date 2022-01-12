@@ -2,7 +2,7 @@ import sqlparse as sqlp
 import evaluator as ev
 import planning as pl
 
-sql = 'select e.last_name, d.dept_name \
+sql = 'select e.last_name, d.dept_name, e.age \
     from employees e, dept_emp de, departments d, \
     cities c, salaries s \
     where e.emp_id = de.emp_id \
@@ -10,7 +10,7 @@ sql = 'select e.last_name, d.dept_name \
         and d.city_id = c.city_id \
         and e.gender = ''F'' \
         and e.age > 30 \
-        and e.age <= 40 \
+        and e.age <= 35 \
         and s.emp_id = e.emp_id \
         and s.salary > 19000'
 

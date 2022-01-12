@@ -3,9 +3,9 @@ from random import randrange, shuffle
 from berkeley import dbPath
 from numpy.random import default_rng
 
-numOfEmp = 1000000
+numOfEmp = 10000000
 numOfDept = 660
-numOfCities = 10000
+numOfCities = 80000
 numOfFirstNames = 30000
 numOfLastNames = 50000
 minAge = 20

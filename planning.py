@@ -195,7 +195,7 @@ def printResult(result):
     numOfRecords = 0
     for buffer in result:
         for rec in buffer:
-            #print(rec)
+            print(rec)
             numOfRecords += 1
     print('Cost: {0}'.format('{:.3f}'.format(
         result.costCumulative)))
