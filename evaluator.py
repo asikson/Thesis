@@ -79,7 +79,7 @@ def evaluateComparison(tokens):
 
     i = tt.findOperator(i, tokens)
     operator = tt.getValueFromIdentifier(tokens[i])
-    if operator not in ['=', '<', '>', '!=']:
+    if operator not in ['=', '<', '>', '!=', '<=', ">="]:
         return -1
     
     i = tt.findIdentifiersOrNumbers(i, tokens)

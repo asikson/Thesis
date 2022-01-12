@@ -10,7 +10,7 @@ sql = 'select e.last_name, d.dept_name \
         and d.city_id = c.city_id \
         and e.gender = ''F'' \
         and e.age > 30 \
-        and e.first_name = ''Abubakar''\
+        and e.age <= 40 \
         and s.emp_id = e.emp_id \
         and s.salary > 19000'
 

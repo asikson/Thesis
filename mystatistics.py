@@ -1,3 +1,4 @@
+from scipy.stats.stats import HistogramResult
 import berkeley as brk
 import info
 from math import inf
@@ -71,6 +72,7 @@ class EquiwidthHistogram:
     def __init__(self, min, max, width):
         self.min = min
         self.max = max
+        self.interval = max - min
         self.width = width
         self.buckets = self.createBuckets()
         self.cachedValues = dict()
@@ -113,6 +115,24 @@ class EquiwidthHistogram:
     def printBuckets(self):
         for b in self.buckets:
             print(b)
+
+    def countSmaller(self, value):
+        sum, i = 0, 0
+        while self.buckets[i].right < value:
+            sum += self.buckets[i].count
+            i += 1
+        sum += (i / self.width) * self.buckets[i].count
+
+        return sum
+    
+    def countLarger(self, value):
+        sum, i = 0, len(self.buckets) - 1
+        while self.buckets[i].left > value:
+            sum += self.buckets[i].count
+            i -= 1
+        sum += (i / self.width) * self.buckets[i].count
+
+        return sum
 
 class Statistics:
     def __init__(self, tablename, fields):
@@ -194,20 +214,24 @@ class Statistics:
             return histogram.factorForValue(value) / self.getTableSize()
 
     def getInequalityFactor(self, fieldname, value, op):
-        min, max = self.getMinMax(fieldname)
-        if value >= min and value <= max:
-            interval = max - min
+        value = int(value)
+        hist = self.histograms[fieldname]
+        if hist.checkUniformDist():
             if op == '<':
-                return (value - min) / interval
+                return (value - hist.min) / hist.interval
             elif op == '<=':
-                return (value - min + 1) / interval
+                return (value - hist.min + 1) / hist.interval
             elif op == '>':
-                return (max - value) / interval
+                return (hist.max - value) / hist.interval
             elif op == '>=':
-                return (max - value + 1) / interval
+                return (hist.max - value + 1) / hist.interval
             else:
                 return -1
         else:
-            return 0
+            if op in ['<=', '<']:
+                return hist.countSmaller(value) / self.tablesize
+            elif op in ['>=', '>']:
+                return hist.countLarger(value) / self.tablesize
+            else:
+                return -1
 
-    

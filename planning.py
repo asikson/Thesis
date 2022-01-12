@@ -169,6 +169,7 @@ class Plan:
 
         for t, fields in stats.items():
             ms.createStatistics(t, fields)
+            print('Stats for {0} prepared!'.format(t))
 
 
     # getting final result
@@ -176,6 +177,7 @@ class Plan:
         # making stats
         self.prepareStats()
 
+        print('Building plans...')
         singleRels = self.pass1()
         if len(singleRels) == 1:
             return [Plan(None, ra.Projection(self.fields, singleRels[0][2]))]
@@ -183,6 +185,7 @@ class Plan:
 
         rehashed = list(map(lambda p: p.rehash(), twoRelPlans))
         flattened = self.multiFlatten(rehashed)
+        print('Choosing best plans...')
         flattened = sorted(flattened, key=lambda p: p.acc.estCostCumulative)
         
         return flattened[:n]

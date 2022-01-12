@@ -25,7 +25,7 @@ class Projection:
                 if len(rowBuffer) == bufferSize:
                     yield rowBuffer
                     rowBuffer = []
-        if len(rowBuffer) == bufferSize:
+        if rowBuffer != []:
             yield rowBuffer
         self.sumUpCost() 
         print(self.costInfo())
