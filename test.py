@@ -14,6 +14,8 @@ sql = 'select e.last_name, d.dept_name, e.age, e.gender \
         and s.emp_id = e.emp_id \
         and s.salary > 19000'
 
+sql = 'select * from departments'
+
 formatted = sqlp.format(sql, keyword_case='upper')
 statement = sqlp.parse(formatted)[0]
 

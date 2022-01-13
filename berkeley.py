@@ -1,7 +1,7 @@
 from bsddb3 import db
 
 def dbPath(tablename):
-    return 'dbs/' + tablename
+    return 'database/' + tablename
 
 def printTable(name):
     for r in tableIterator(name):
