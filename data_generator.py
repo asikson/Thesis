@@ -47,6 +47,7 @@ def generateEmpData():
         empDB.put(bytes(str(i+1), 'utf-8'), values)
 
     empDB.close()
+    print('Generated employees data!')
 
 # cities
 def generateCitiesData():
@@ -60,6 +61,7 @@ def generateCitiesData():
         citiesDB.put(bytes(str(i), 'utf-8'), c)
         i += 1
     citiesDB.close()
+    print('Generated cities data!')
 
 # departments
 def generateDeptData():
@@ -78,6 +80,7 @@ def generateDeptData():
         i += 1
 
     deptDB.close()
+    print('Generated departments data!')
 
 # dept - emp
 def generateDeptEmpData():
@@ -94,6 +97,7 @@ def generateDeptEmpData():
         i += 1
 
     deptEmpDB.close()
+    print('Generated dept_emp data!')
 
 # salaries
 def generateSalariesData():  
@@ -110,6 +114,7 @@ def generateSalariesData():
         i += 1
 
     salariesDB.close()
+    print('Generated salaries data!')
 
 # dept - manager
 def generateDeptManagerData():
@@ -132,6 +137,7 @@ def generateDeptManagerData():
         deptManagerDB.put(bytes(str(i), 'utf-8'), values)
 
     deptManagerDB.close()
+    print('Generated menagers data!')
 
 ######################################################################
 

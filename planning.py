@@ -84,11 +84,7 @@ class Plan:
     # relations
     def singleRelation(self, table):
         chosen = self.singleRelationPreds(table)
-
-        if chosen == []:
-            return table, chosen, ra.Read(table)
-        else:
-            return table, chosen, ra.ReadWithSelection(table, chosen)
+        return table, chosen, ra.ReadWithSelection(table, chosen)
 
     def twoRelationPlan(self, rel1, rel2):
         table1, chosen1, read1 = rel1
@@ -195,7 +191,7 @@ def printResult(result):
     numOfRecords = 0
     for buffer in result:
         for rec in buffer:
-            print(rec)
+            #print(rec)
             numOfRecords += 1
     print('Cost: {0}'.format('{:.3f}'.format(
         result.costCumulative)))

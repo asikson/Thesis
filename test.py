@@ -2,7 +2,7 @@ import sqlparse as sqlp
 import evaluator as ev
 import planning as pl
 
-sql = 'select e.last_name, d.dept_name, e.age \
+sql = 'select e.last_name, d.dept_name, e.age, e.gender \
     from employees e, dept_emp de, departments d, \
     cities c, salaries s \
     where e.emp_id = de.emp_id \
