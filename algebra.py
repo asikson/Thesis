@@ -1,5 +1,5 @@
 import row
-import berkeley as brk
+import db_plugin as dbp
 import info
 import mystatistics as ms
 from numpy import prod
@@ -331,6 +331,7 @@ class CrossProduct:
 class ReadWithSelection:
     def __init__(self, table, predicates):
         self.tablename = table.name
+        self.plugin = dbp.DbPlugin(self.tablename)
         self.predicates = predicates
 
         self.cost = 0
@@ -357,11 +358,11 @@ class ReadWithSelection:
     def iterReadBuffer(self):
         columns = info.getTableColumns(self.tablename)
 
-        for rec in brk.tableIterator(self.tablename):
+        for rec in self.plugin.tableIterator():
             self.cost += 1
             newRow = row.Row.rowFromRecord(self.tablename,
                 columns, 
-                brk.getValuesFromRecord(rec))
+                self.plugin.decodePair(rec))
 
             if (self.predicates == []
                 or newRow.select(self.predicates)):
@@ -424,6 +425,7 @@ class ReadWithSelection:
 class ReadPkDict:
     def __init__(self, table):
         self.tablename = table.name
+        self.plugin = dbp.DbPlugin(self.tablename)
 
         self.cost = 0
         self.costCumulative = 0
@@ -433,7 +435,8 @@ class ReadPkDict:
         self.estCostCumulative = self.estCost
 
     def get(self, pk):
-        values = brk.getValuesByPk(self.tablename, pk)
+        values = self.plugin.getValuesByKey(pk)
+
         if values != -1:
             newRow = row.Row.rowFromRecord(self.tablename,
                 info.getTableColumns(self.tablename),

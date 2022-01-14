@@ -1,8 +1,8 @@
 from scipy.stats.stats import HistogramResult
-import berkeley as brk
 import info
 from math import inf
 from scipy.stats import chisquare
+import db_plugin as dbp
 
 statistics = dict()
 numOfBuckets = 20
@@ -137,6 +137,7 @@ class EquiwidthHistogram:
 class Statistics:
     def __init__(self, tablename, fields):
         self.tablename = tablename
+        self.plugin = dbp.DbPlugin(self.tablename)
         self.columns = info.getTableColumns(tablename)
 
         # cached info
@@ -149,7 +150,7 @@ class Statistics:
 
     def valuesForFields(self, rec, fields):
         idx = [self.columns.index(f) for f in fields]
-        values = brk.getValuesFromRecord(rec)
+        values = self.plugin.decodePair(rec)
         
         return [values[i] for i in idx]
 
@@ -180,7 +181,7 @@ class Statistics:
                 self.mins[f] = inf
                 self.maxes[f] = -1 * inf
 
-        for rec in brk.tableIterator(self.tablename):
+        for rec in self.plugin.tableIterator():
             self.tablesize += 1
             values = list(zip(fields, types, self.valuesForFields(rec, fields)))
             

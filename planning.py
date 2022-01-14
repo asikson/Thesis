@@ -176,7 +176,10 @@ class Plan:
         print('Building plans...')
         singleRels = self.pass1()
         if len(singleRels) == 1:
-            return [Plan(None, ra.Projection(self.fields, singleRels[0][2]))]
+            if self.fields == []:
+                return [Plan(None, singleRels[0][2])]
+            else:
+                return [Plan(None, ra.Projection(self.fields, singleRels[0][2]))]
         twoRelPlans = self.pass2(singleRels)
 
         rehashed = list(map(lambda p: p.rehash(), twoRelPlans))
@@ -191,7 +194,7 @@ def printResult(result):
     numOfRecords = 0
     for buffer in result:
         for rec in buffer:
-            #print(rec)
+            print(rec)
             numOfRecords += 1
     print('Cost: {0}'.format('{:.3f}'.format(
         result.costCumulative)))
