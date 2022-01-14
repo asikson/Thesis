@@ -1,0 +1,5 @@
+{
+	"id": "int",
+	"salary": "int",
+	"emp_id": "int"
+}

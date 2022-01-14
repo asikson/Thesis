@@ -1,0 +1,8 @@
+{
+	"employees": "emp_id",
+	"departments": "dept_id",
+	"cities": "city_id",
+	"dept_emp": "id",
+	"dept_manager": "id",
+	"salaries": "id"
+}

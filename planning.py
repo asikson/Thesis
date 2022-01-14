@@ -1,6 +1,6 @@
 import algebra as ra
 import output as out
-import info
+import struct_plugin as sp
 import mystatistics as ms
 
 class Plan:
@@ -99,11 +99,11 @@ class Plan:
         else:
             for c in commonPreds:
                 f1, f2 = self.matchField(c, table1)
-                if info.isForeinKey(table1.name, f1.name, table2.name, f2.name):
+                if sp.isForeinKey(table1.name, f1.name, table2.name, f2.name):
                     read2 = ra.ReadPkDict(table2)
                     predsForJoin = self.listDiff(commonPreds, [c]) + chosen2
                     return Plan(newOutput, ra.Join(read1, read2, predsForJoin, f1))
-                elif info.isForeinKey(table2.name, f2.name, table1.name, f1.name):
+                elif sp.isForeinKey(table2.name, f2.name, table1.name, f1.name):
                     read1 = ra.ReadPkDict(table1)
                     predsForJoin = self.listDiff(commonPreds, [c]) + chosen1
                     return Plan(newOutput, ra.Join(read2, read1, predsForJoin, f2))
@@ -122,7 +122,7 @@ class Plan:
         else:
             for c in commonPreds:
                 f, fk = self.matchField(c, table)
-                if info.isTablesPk(table.name, f.name):
+                if sp.isTablesPk(table.name, f.name):
                     read = ra.ReadPkDict(table)
                     predsForJoin = self.listDiff(commonPreds, [c]) + chosen
                     return Plan(newOutput, ra.Join(self.acc, read, predsForJoin, fk))

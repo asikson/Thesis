@@ -1,5 +1,5 @@
-from scipy.stats.stats import HistogramResult
-import info
+from pty import spawn
+import struct_plugin as sp
 from math import inf
 from scipy.stats import chisquare
 import db_plugin as dbp
@@ -22,11 +22,11 @@ def reductionFactor(predicate):
         # finding specific values
         if op == '=':
             # primary keys
-            if info.isTablesPk(tablename, field):
+            if sp.isTablesPk(tablename, field):
                 return 1.0 / stat.getTableSize()
             # other fields
             else:
-                t = info.getFieldType(tablename, field)
+                t = sp.getFieldType(tablename, field)
                 # string fields
                 if t == str:
                     return 1.0 / stat.getDiffValues(field)
@@ -44,10 +44,10 @@ def reductionFactor(predicate):
     else:
         tname1, f1, op, tname2, f2 = predicate.split()
         # foreign keys
-        if info.isForeinKey(tname1, f1, tname2, f2):
+        if sp.isForeinKey(tname1, f1, tname2, f2):
             stat = getStatistics(tname2)
             return 1.0 / stat.tablesize
-        elif info.isForeinKey(tname2, f2, tname1, f1):
+        elif sp.isForeinKey(tname2, f2, tname1, f1):
             stat = getStatistics(tname1)
             return 1.0 / stat.tablesize
         # other fields
@@ -138,7 +138,7 @@ class Statistics:
     def __init__(self, tablename, fields):
         self.tablename = tablename
         self.plugin = dbp.DbPlugin(self.tablename)
-        self.columns = info.getTableColumns(tablename)
+        self.columns = sp.getTableColumns(tablename)
 
         # cached info
         self.tablesize = None
@@ -168,7 +168,7 @@ class Statistics:
         return histogram
 
     def gatherStatistics(self, fields):
-        types = [info.getFieldType(self.tablename, f) for f in fields]
+        types = [sp.getFieldType(self.tablename, f) for f in fields]
         self.tablesize = 0
         visited = dict()
         valuesForHist = dict()

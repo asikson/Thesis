@@ -1,7 +1,7 @@
 import row
 import db_plugin as dbp
-import info
 import mystatistics as ms
+import struct_plugin as sp
 from numpy import prod
 from math import ceil
 
@@ -356,7 +356,7 @@ class ReadWithSelection:
             yield self.passBuffer
 
     def iterReadBuffer(self):
-        columns = info.getTableColumns(self.tablename)
+        columns = sp.getTableColumns(self.tablename)
 
         for rec in self.plugin.tableIterator():
             self.cost += 1
@@ -439,7 +439,7 @@ class ReadPkDict:
 
         if values != -1:
             newRow = row.Row.rowFromRecord(self.tablename,
-                info.getTableColumns(self.tablename),
+                sp.getTableColumns(self.tablename),
                 values)
             return newRow
 

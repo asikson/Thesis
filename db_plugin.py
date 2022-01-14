@@ -1,11 +1,8 @@
 from bsddb3 import db
-from json import load
 
 class DbPlugin:
     def __init__(self, tablename):
-        with open('params/db_plugin_params.txt') as f:
-            self.params = load(f)
-        self.filename = self.params["dbFolderPath"] + tablename
+        self.filename = 'database/' + tablename
         self.data = db.DB()
 
     def createTable(self, stream):

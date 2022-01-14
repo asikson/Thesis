@@ -1,0 +1,11 @@
+{
+	"dept_emp.dept_id": "departments.dept_id",
+	"dept_emp.emp_id": "employees.emp_id",
+	
+	"departments.city_id": "cities.city_id",
+	
+	"dept_manager.dept_id": "departments.dept_id",
+	"dept_manager.emp_id": "employees.emp_id",
+	
+	"salaries.emp_id": "employees.emp_id"
+}
