@@ -1,1 +1,0 @@
-{"tablesize": 100000, "emp_id.min": 1, "age.min": 20, "emp_id.max": 100000, "age.max": 79, "emp_id.diff": 100000, "gender.diff": 2, "age.diff": 60, "emp_id.uniform": "F", "age.uniform": "F"}
