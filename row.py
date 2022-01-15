@@ -36,7 +36,9 @@ class Row:
         for k, v in self.values.items():
             if k in fields:
                 filtered[k] = v
-        self.values = {k: v for k, v in sorted(filtered.items(), key=ft.cmp_to_key(fieldSort))}
+        self.values = {k: v for k, v in sorted(filtered.items(),
+            key=ft.cmp_to_key(fieldSort))}
+
         return self
 
     def select(self, predicates):
@@ -56,18 +58,21 @@ class Row:
         if not isinstance(rightVal, str):
             leftVal = int(leftVal)
     
-        if predicate.operator == '=':
-            return leftVal == rightVal
-        elif predicate.operator == '!=':
-            return leftVal != rightVal
-        elif predicate.operator == '>':
-            return leftVal > rightVal
-        elif predicate.operator == '>=':
-            return leftVal >= rightVal
-        elif predicate.operator == '<':
-            return leftVal < rightVal
-        elif predicate.operator == '<=':
-            return leftVal < rightVal
+        return self.checkCond(leftVal, rightVal, predicate.operator)
+
+    def checkCond(self, left, right, op):
+        if op == '=':
+            return left == right
+        elif op == '!=':
+            return left != right
+        elif op == '>':
+            return left > right
+        elif op == '>=':
+            return left >= right
+        elif op == '<':
+            return left < right
+        elif op == '<=':
+            return left < right
         else:
             return -1
 
@@ -76,9 +81,8 @@ class Row:
         if field in self.values.keys():
             return self.values[field]
         else:
-            print('No field: {0} in {1}'.format(
-                field, self.values.keys()))
-            assert(False)
+            assert(False), 'No field: {0} in {1}'.format(
+                field, self.values.keys())
 
     def valuesForFields(self, fields):
         return tuple(map(
