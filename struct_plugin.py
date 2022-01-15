@@ -1,4 +1,3 @@
-from dataclasses import field
 from json import load
 from pydoc import locate
 
@@ -8,7 +7,7 @@ def getTableDict(tablename):
     return tableDict
 
 def getTableColumns(tablename):
-    return getTableDict(tablename).keys()
+    return list(getTableDict(tablename).keys())
 
 def getFieldType(tablename, fieldname):
     return locate(getTableDict(tablename)[fieldname])

@@ -338,7 +338,7 @@ class ReadWithSelection:
         self.costCumulative = 0
 
         self.estRedFactor = self.estimateRedFactor()
-        self.estCost = ms.getStatistics(self.tablename).tablesize
+        self.estCost = ms.getTablesize(self.tablename)
         self.estSize = self.estRedFactor * self.estCost
         self.estCostCumulative = self.estCost
 

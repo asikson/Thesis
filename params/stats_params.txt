@@ -1,0 +1,4 @@
+{
+	"numOfBuckets": 20,
+	"arbitraryFactor": 0.3
+}
