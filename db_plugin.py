@@ -47,6 +47,10 @@ class DbPlugin:
         key, values = pair
         return [self.decodeKey(key)] + self.decodeValues(values)
 
+    def keyFromPair(self, pair):
+        key, _ = pair
+        return self.decodeKey(key)
+
     def getValuesByKey(self, key):
         self.data.open(self.filename, dbtype=db.DB_HASH, flags=db.DB_DIRTY_READ)
         encodedKey = self.encodeKey(key)
@@ -57,3 +61,11 @@ class DbPlugin:
             return -1
 
         return [key] + self.decodeValues(rec)
+
+    def getValuesByIndexKey(self, keys):
+        self.data.open(self.filename, dbtype=db.DB_HASH, flags=db.DB_DIRTY_READ)
+        encodedKey = self.encodeKey(self.encodeValues(keys))
+        values = self.data.get(encodedKey)
+        self.data.close()
+
+        return self.decodeValues(values)

@@ -23,14 +23,23 @@ class Index:
         return [values[i] for i in idx]
     
     def indexStream(self):
+        index = dict()
         tablePlugin = dbp.DbPlugin(self.tablename)
         for rec in tablePlugin.tableIterator():
-            vals4Key = self.filterValues(rec, self.fields)
-            values = self.filterValues(rec, self.columns)
-            vals4Key = self.plugin.encodeValues(vals4Key)
+            pk = tablePlugin.keyFromPair(rec)
+            vals4Key = tuple(self.filterValues(rec, self.fields))
+            if vals4Key in index.keys():
+                index[vals4Key] += '\0' + str(pk)
+            else:
+                index[vals4Key] = str(pk)
 
-            print(vals4Key, values)
-            yield vals4Key, values
+        for k, v in index.items():
+            yield tablePlugin.encodeValues(k), [v]
 
     def createIndex(self):
         self.plugin.createTable(self.indexStream())
+
+#idx = Index('employees', ['gender'])
+plugin = dbp.DbPlugin('employees_idx_gender')
+
+print(plugin.getValuesByIndexKey(['F']))
