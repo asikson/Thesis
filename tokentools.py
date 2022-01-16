@@ -117,6 +117,14 @@ def findIdentifiers(i, tokens):
         j += 1
     return j
 
+def findIdentifiersOrLists(i, tokens):
+    j = i + 1
+    while (j < len(tokens) 
+        and not isIdentifier(tokens[j])
+        and not isIdentifierList(tokens[j])):
+        j += 1
+    return j
+
 def findOperator(i, tokens):
     j = i + 1
     while (j < len(tokens) 

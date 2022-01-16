@@ -1,6 +1,7 @@
 from sqlparse import format, parse
 import tokentools as tools
 import sql_output as sqlout
+import index
 
 def getQueries():
     with open('queries.txt') as f:
@@ -44,9 +45,7 @@ def evaluateStatement(tokens):
             predicates = []
 
         fields, predicates = translateAliases(fields, tables, predicates)
-        output = sqlout.formatOutput(fields, predicates, tables)
-        print(output)
-        return output
+        return sqlout.formatOutput(fields, predicates, tables)
 
     elif tools.isCreateKeyword(tokens[idx]):
         idx = tools.skipWhitespaces(idx, tokens)
@@ -60,7 +59,8 @@ def evaluateStatement(tokens):
         assert(tools.isFunction(tokens[idx]))
 
         tablename, fields = getIndex(tokens[idx].tokens)
-        print(idx_name, tablename, fields)
+        idx = index.Index(tablename, fields, idx_name)
+        return idx
     else:
         assert(False), 'Unknown statement'
 
@@ -141,11 +141,13 @@ def getIndex(tokens):
     return tablename, fields
 
 def getIndexFields(tokens):
-    fields = []
-    idx = tools.findIdentifiers(-1, tokens)
-    while idx < len(tokens):
-        fieldname = tools.getNamesFromIdentifier(tokens[idx])[0]
-        fields.append(fieldname)
-        idx = tools.findIdentifiers(idx, tokens)
-    
-    return fields
+    idx = tools.findIdentifiersOrLists(-1, tokens)
+
+    if tools.isIdentifier(tokens[idx]):
+        return [tools.getNamesFromIdentifier(tokens[idx])[0]]
+    elif tools.isIdentifierList(tokens[idx]):
+        return list(map(
+            lambda t: t[0],
+            tools.getNamesFromIdentifierList(tokens[idx])))
+    else:
+        assert(False)

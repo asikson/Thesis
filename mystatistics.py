@@ -4,6 +4,30 @@ from math import inf
 from scipy.stats import chisquare
 from json import load, dumps
 
+def prepareStats(outputs):
+        toStat = dict()
+
+        for out in outputs:
+            for t in out.tables:
+                if t.name not in toStat.keys():
+                    toStat[t.name] = []
+
+            for p in out.predicates:
+                if p.withValue:
+                    t, f, _, _ = p.split()
+                    if f not in toStat[t]:
+                        toStat[t].append(f)
+                else:
+                    t1, f1, _, t2, f2 = p.split()
+                    if f1 not in toStat[t1]:
+                        toStat[t1].append(f1)
+                    if f2 not in toStat[t2]:
+                        toStat[t2].append(f2)
+
+        for t, fields in toStat.items():
+            createStatistics(t, fields)
+            print('Stats for {0} prepared!'.format(t))
+
 def createStatistics(tablename, fields):
     stat = Statistics(tablename, fields)
 
@@ -43,7 +67,8 @@ class Statistics:
             self.diffValues[f] = 0
             visited[f] = set()
             if t == int:
-                valuesForHist[f] = []
+                if not sp.isTablesPk(self.tablename, f):
+                    valuesForHist[f] = []
                 self.mins[f] = inf
                 self.maxes[f] = -1 * inf
 

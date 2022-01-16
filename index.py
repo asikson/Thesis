@@ -2,16 +2,22 @@ import db_plugin as dbp
 import struct_plugin as sp
 
 class Index:
-    def __init__(self, tablename, fields):
+    def __init__(self, tablename, fields, indexName):
         self.tablename = tablename
         self.fields = fields
-        self.filename = '{0}_idx_{1}'.format(
-            self.tablename,
-            self.fields2Name())
+        self.filename = self.getFilename(indexName)
         self.plugin = dbp.DbPlugin(self.filename)
         self.columns = sp.getTableColumns(tablename)
 
-        self.createIndex()
+    def getFilename(self, indexName):
+        if indexName is None:
+            return '{0}idx_{1}'.format(
+                self.tablename,
+                self.fields2Name())
+        else:
+            return '{0}idx_{1}'.format(
+                self.tablename,
+                indexName)
 
     def fields2Name(self):
         return '_'.join(self.fields)
