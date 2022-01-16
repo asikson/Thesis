@@ -28,4 +28,4 @@ def isForeinKey(tablename1, field1, tablename2, field2):
 
     return (key2Search in fkDict.keys() 
         and fkDict[key2Search] == val2Search
-        and isTablesPk(tablename1, field1)) 
+        and isTablesPk(tablename2, field2)) 

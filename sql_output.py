@@ -1,3 +1,25 @@
+class SqlOutput:
+    def __init__(self, fields, predicates, tables):
+        self.fields = fields
+        self.predicates = predicates
+        self.tables = tables
+
+    def __str__(self):
+        return "Fields: " + ', '.join(map(str, self.fields)) + "\n" \
+            + "Predicates: " + ', '.join(map(str, self.predicates)) + "\n" \
+            + "Tables: " + ', '.join(map(str, self.tables))
+    
+    def get(self):
+        return self.fields, self.predicates, self.tables
+
+class Field:
+    def __init__(self, tablename, name):
+        self.tablename = tablename
+        self.name = name
+
+    def __str__(self):
+        return self.tablename + "." + self.name
+
 class Predicate:
     def __init__(self, left, right, operator):
         self.left = left
@@ -39,24 +61,20 @@ class Table:
     def __str__(self):
         return self.name + " (" + self.alias + ")"
 
-class Field:
-    def __init__(self, name, tablename):
-        self.name = name
-        self.tablename = tablename
 
-    def __str__(self):
-        return self.tablename + "." + self.name
+def formatField(pair):
+    return Field(pair[0], pair[1])
 
-class evaluatorOutput:
-    def __init__(self, fields, predicates, tables):
-        self.fields = fields
-        self.predicates = predicates
-        self.tables = tables
+def formatFields(fields):
+    return list(map(formatField, fields))
 
-    def __str__(self):
-        return "FIELDS: " + ', '.join(map(str, self.fields)) + "\n" \
-            + "PREDICATES: " + ', '.join(map(str, self.predicates)) + "\n" \
-            + "TABLES: " + ', '.join(map(str, self.tables))
-    
-    def get(self):
-        return self.fields, self.predicates, self.tables
+def formatTables(tables):
+    return list(map(
+        lambda t: Table(t[0], t[1]) if len(t) > 1
+            else Table(t[0], t[0]), tables))
+
+def formatPredicate(left, right, op):
+    return Predicate(left, right, op)
+
+def formatOutput(fields, predicates, tables):
+    return SqlOutput(fields, predicates, tables)

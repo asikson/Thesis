@@ -58,7 +58,8 @@ class Statistics:
                     visited[f].add(v)
                 if t == int:
                     v = int(v)
-                    valuesForHist[f].append(v)
+                    if not sp.isTablesPk(self.tablename, f):
+                        valuesForHist[f].append(v)
                     if v > self.maxes[f]:
                         self.maxes[f] = v 
                     elif v < self.mins[f]:

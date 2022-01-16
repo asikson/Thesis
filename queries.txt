@@ -1,0 +1,12 @@
+create index my_index on cities (city_name)
+
+select e.last_name, d.dept_name, e.age, e.gender 
+from employees e, dept_emp de, departments d, cities c, salaries s 
+where e.emp_id = de.emp_id
+and de.dept_id = d.dept_id 
+and d.city_id = c.city_id 
+and e.gender = ''F'' 
+and e.age > 30 
+and e.age <= 35 
+and s.emp_id = e.emp_id 
+and s.salary > 8000

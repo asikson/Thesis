@@ -11,3 +11,6 @@ clean_stats:
 
 generate:
 	@python3 generator.py
+	
+test:
+	@python3 main.py

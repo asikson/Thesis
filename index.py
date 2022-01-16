@@ -38,8 +38,3 @@ class Index:
 
     def createIndex(self):
         self.plugin.createTable(self.indexStream())
-
-#idx = Index('employees', ['gender'])
-plugin = dbp.DbPlugin('employees_idx_gender')
-
-print(plugin.getValuesByIndexKey(['F']))

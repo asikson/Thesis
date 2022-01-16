@@ -2,12 +2,11 @@ import row
 import db_plugin as dbp
 import mystatistics as ms
 import struct_plugin as sp
+import index as idx
+from sql_output import Table
 from numpy import prod
 from math import ceil
-
-passBufferSize = 10000
-readBufferSize = 2000000
-hashBufferSize = 1000000
+from json import load
 
 
 class Projection:
@@ -23,6 +22,7 @@ class Projection:
         self.estCostCumulative = data.estCostCumulative + self.estCost
 
         self.passBuffer = []
+        self.passBufferMaxSize = getParam("passBufferSize")
 
     def __iter__(self):
         for buffer in self.data:
@@ -30,10 +30,10 @@ class Projection:
                 self.cost += 1
                 newRow = rec.copy().project(self.fields)
                 self.passBuffer.append(newRow)
-                if self.isPassBufferFull():
+                if len(self.passBuffer) == self.passBufferMaxSize:
                     yield self.passBuffer
                     self.passBuffer = []
-        if not self.isPassBufferEmpty():
+        if self.passBuffer != []:
             yield self.passBuffer
         self.sumUpCost() 
         print(self.costInfo())
@@ -48,14 +48,6 @@ class Projection:
 
     def sumUpCost(self):
         self.costCumulative += self.data.costCumulative + self.cost
-
-
-    # buffer
-    def isPassBufferFull(self):
-        return len(self.passBuffer) == passBufferSize
-    
-    def isPassBufferEmpty(self):
-        return self.passBuffer == []
 
 
     def __str__(self):
@@ -81,6 +73,7 @@ class Selection:
         self.estCostCumulative = data.estCostCumulative + self.estCost
 
         self.passBuffer = []
+        self.passBufferMaxSize = getParam("passBufferSize")
 
     def __iter__(self):
         for buffer in self.data:
@@ -88,10 +81,10 @@ class Selection:
                 self.cost += 1
                 if rec.select(self.predicates):
                     self.passBuffer.append(rec)
-                    if self.isPassBufferFull():
+                    if len(self.passBuffer) == self.passBufferMaxSize:
                         yield self.passBuffer
                         self.passBuffer = []
-        if not self.isPassBufferEmpty():
+        if self.passBuffer != []:
             yield self.passBuffer
         self.sumUpCost()
         print(self.costInfo())
@@ -107,14 +100,6 @@ class Selection:
 
     def sumUpCost(self):
         self.costCumulative += self.data.costCumulative + self.cost
-
-
-    # buffer
-    def isPassBufferFull(self):
-        return len(self.passBuffer) == passBufferSize
-    
-    def isPassBufferEmpty(self):
-        return self.passBuffer == []
 
 
     def __str__(self):
@@ -133,19 +118,21 @@ class Join:
         self.predicates = predicates
         self.withDict = isinstance(self.right, ReadPkDict)
         self.fk = fk if self.withDict else None
+        self.kind = getParam("joinKind")
 
         self.cost = 0
         self.costCumulative = 0
 
+        self.hashBuffer = dict()
+        self.hashBufferMaxSize = getParam("hashBufferSize")
+        self.passBuffer = []
+        self.passBufferMaxSize = getParam("passBufferSize")
+
         self.estRedFactor = self.estimateRedFactor()
         self.estSize = self.estimateSize()
         self.estCost = self.estimateCost()
-        self.estCostCumulative = self.left.estCostCumulative + \
-            ceil(self.left.estSize / hashBufferSize) * self.right.estCostCumulative + \
-            self.estCost
+        self.estCostCumulative = self.estimateCostCumulative()
 
-        self.passBuffer = []
-        self.hashBuffer = dict()
 
     def __iter__(self):
         if self.withDict:
@@ -158,19 +145,22 @@ class Join:
                         newRow = l.copy().concat(r)
                         if newRow.select(self.predicates):
                             self.passBuffer.append(newRow)
-                            if self.isPassBufferFull():
+                            if len(self.passBuffer) == self.passBufferMaxSize:
                                 yield self.passBuffer
                                 self.passBuffer = []
-            if not self.isPassBufferEmpty():
+            if self.passBuffer != []:
                 yield self.passBuffer
-        # hash join
         else:
-            for rec in self.hashJoin():
+            if self.kind == 'hash':
+                it = self.hashJoin()
+            elif self.kind == 'index':
+                it = self.indexJoin()
+            for rec in it:
                 self.passBuffer.append(rec)
-                if self.isPassBufferFull():
+                if len(self.passBuffer) == self.passBufferMaxSize:
                     yield self.passBuffer
                     self.passBuffer = []
-            if not self.isPassBufferEmpty():
+            if self.passBuffer != []:
                 yield self.passBuffer
         self.sumUpCost()
         print(self.costInfo())
@@ -189,11 +179,11 @@ class Join:
                     self.hashBuffer[k].append(l)
                 else:
                     self.hashBuffer[k] = [l]
-                if self.isHashBufferFull():
+                if len(self.hashBuffer) == self.hashBufferMaxSize:
                     for rec in self.iterRight():
                         yield rec
                     self.hashBuffer = dict()
-        if not self.isHashBufferEmpty():
+        if len(self.hashBuffer) != 0:
             for rec in self.iterRight():
                 yield rec
 
@@ -210,6 +200,35 @@ class Join:
                         newRow = v.copy().concat(r)
                         yield newRow
 
+    def indexJoin(self):
+        for p in self.predicates:
+            p.orderRightByTable(self.right.tablename)
+        fieldsRight = list(map(
+            lambda p: p.right, self.predicates))
+        fieldsLeft = list(map(
+            lambda p: p.left, self.predicates))
+
+        names2Index = list(map(
+            lambda f: f.name,
+            fieldsRight))
+        rightIdx = idx.Index(self.right.tablename,
+            names2Index)
+        self.cost += self.right.estSize
+        idxPlugin = dbp.DbPlugin(rightIdx.filename)
+        idxPlugin.open()
+        self.right = ReadPkDict(Table(self.right.tablename, None))
+
+        for lb in self.left:
+            for l in lb:
+                self.cost += 1
+                k = l.valuesForFields(fieldsLeft)
+                pks = idxPlugin.getValuesByIndexKey(k)
+                for pk in pks:
+                    r = self.right.get(pk)
+                    if r != -1:
+                        newRow = l.copy().concat(r)
+                        yield newRow
+        idxPlugin.close()
 
     # costs
     def estimateRedFactor(self):
@@ -228,33 +247,34 @@ class Join:
         if self.withDict:
             return self.left.estSize
         else:
-            return self.left.estSize + \
-                ceil(self.left.estSize / hashBufferSize) * self.right.estSize
+            if self.kind == "hash":
+                return self.left.estSize \
+                    + ceil(self.left.estSize / self.hashBufferMaxSize) \
+                        * self.right.estSize
+            elif self.kind == 'index':
+                return self.right.estSize + self.left.estSize
+
+    def estimateCostCumulative(self):
+        if self.withDict or self.kind == 'index':
+            return self.left.estCostCumulative + self.estCost
+        else:
+            if self.kind == 'hash':
+                return self.left.estCostCumulative \
+                    + ceil(self.left.estSize / self.hashBufferMaxSize) \
+                        * self.right.estCostCumulative \
+                    + self.estCost
 
     def costInfo(self):
-        return 'Cost of joining {0}: {1} (est. cost: {2} with est. red. {3})'.format(
+        return 'Cost of {0} joining {1}: {2} (est. cost: {3} with est. red. {4})'.format(
+            '' if self.withDict else self.kind,
             self.right.tablename,
             '{:.3f}'.format(self.cost),
             '{:.3f}'.format(self.estCost),
             '{:.3f}'.format(self.estRedFactor))
 
     def sumUpCost(self):
-        self.costCumulative += self.left.costCumulative + \
-            self.right.costCumulative + self.cost
-
-
-    # buffers
-    def isPassBufferFull(self):
-        return len(self.passBuffer) == passBufferSize
-    
-    def isPassBufferEmpty(self):
-        return self.passBuffer == []
-
-    def isHashBufferFull(self):
-        return len(self.hashBuffer) == hashBufferSize
-    
-    def isHashBufferEmpty(self):
-        return len(self.hashBuffer) == 0
+        self.costCumulative += self.left.costCumulative \
+            + self.right.costCumulative + self.cost
 
 
     def __str__(self):
@@ -281,10 +301,12 @@ class CrossProduct:
 
         self.estSize = self.left.estSize * self.right.estSize
         self.estCost = self.left.estSize * self.right.estSize
-        self.estCostCumulative = left.estCostCumulative + \
-            self.left.estSize * self.right.estCostCumulative + self.estCost
+        self.estCostCumulative = left.estCostCumulative \
+            + self.left.estSize * self.right.estCostCumulative \
+            + self.estCost
 
         self.passBuffer = []
+        self.passBufferMaxSize = getParam("passBufferSize")
 
     def __iter__(self):
         for lb in self.left:
@@ -294,10 +316,10 @@ class CrossProduct:
                         self.cost += 1
                         newRow = l.copy().concat(r)
                         self.passBuffer.append(newRow)
-                        if self.isPassBufferFull():
+                        if len(self.passBuffer) == self.passBufferMaxSize:
                             yield self.passBuffer
                             self.passBuffer = []
-        if not self.isPassBufferEmpty():
+        if self.passBuffer != []:
             yield self.passBuffer
         self.sumUpCost()
         print(self.costInfo())
@@ -312,14 +334,6 @@ class CrossProduct:
     def sumUpCost(self):
         self.costCumulative += self.left.costCumulative + \
             self.right.costCumulative + self.cost
-
-
-    # buffer
-    def isPassBufferFull(self):
-        return len(self.passBuffer) == passBufferSize
-    
-    def isPassBufferEmpty(self):
-        return self.passBuffer == []
 
 
     def __str__(self):
@@ -343,16 +357,18 @@ class ReadWithSelection:
         self.estCostCumulative = self.estCost
 
         self.readBuffer = []
+        self.readBufferMaxSize = getParam("readBufferSize")
         self.passBuffer = []
+        self.passBufferMaxSize = getParam("passBufferSize")
 
     def __iter__(self):
         for rb in self.iterReadBuffer():
             for r in rb:
                 self.passBuffer.append(r)
-                if self.isPassBufferFull():
+                if len(self.passBuffer) == self.passBufferMaxSize:
                     yield self.passBuffer
                     self.passBuffer = []
-        if not self.isPassBufferEmpty():
+        if self.passBuffer != []:
             yield self.passBuffer
 
     def iterReadBuffer(self):
@@ -368,11 +384,11 @@ class ReadWithSelection:
                 or newRow.select(self.predicates)):
                 self.readBuffer.append(newRow)
 
-            if self.isReadBufferFull():
+            if len(self.readBuffer) == self.readBufferMaxSize:
                 yield self.readBuffer
                 self.readBuffer = []
 
-        if not self.isReadBufferEmpty():
+        if self.readBuffer != []:
             yield self.readBuffer
             self.readBuffer = []
 
@@ -399,20 +415,6 @@ class ReadWithSelection:
         self.costCumulative += self.cost
 
 
-    # buffers
-    def isReadBufferFull(self):
-        return len(self.readBuffer) == readBufferSize
-    
-    def isReadBufferEmpty(self):
-        return self.readBuffer == []
-
-    def isPassBufferFull(self):
-        return len(self.passBuffer) == passBufferSize
-    
-    def isPassBufferEmpty(self):
-        return self.passBuffer == []
-
-
     def __str__(self):
         return 'READ with sel. ({0}) on [{1}]'.format(
             self.tablename,
@@ -426,6 +428,7 @@ class ReadPkDict:
     def __init__(self, table):
         self.tablename = table.name
         self.plugin = dbp.DbPlugin(self.tablename)
+        self.plugin.open()
 
         self.cost = 0
         self.costCumulative = 0
@@ -445,3 +448,12 @@ class ReadPkDict:
 
     def __str__(self):
         return 'READ DICT ({0})'.format(self.tablename)
+
+
+def getParam(paramName):
+    with open('params/engine_params.txt', 'r') as f:
+        params = load(f)
+    if paramName in params.keys():
+        return params[paramName]
+    else:
+        assert(False), "Parameter not found"
