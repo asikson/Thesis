@@ -1,4 +1,4 @@
-from index import Index
+import index as idx
 import sql_plugin as sqlp
 from sql_output import SqlOutput
 import mystatistics as ms
@@ -8,10 +8,6 @@ if __name__ == '__main__':
     queries = sqlp.getQueries()
     statements = [sqlp.formatAndParse(q)
         for q in queries]
-    '''
-    for s in statements:
-        s._pprint_tree()
-    '''
     
     outputs = list(map(
         lambda s: sqlp.evaluateStatement(s.tokens),
@@ -31,11 +27,12 @@ if __name__ == '__main__':
             planner.printBest()
             best = planner.getBest()
             pl.printResult(best)
-        elif isinstance(out, Index):
+        elif isinstance(out, idx.Index) \
+            and not idx.checkIfIndexExists(out.tablename, out.fields):
+            
+            out.createIndex()
             print('Created index {0} for {1} ({2})'.format(
                 out.tablename,
                 out.filename,
                 ', '.join(out.fields)))
-            out.createIndex()
-
-
+            

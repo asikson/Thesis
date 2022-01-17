@@ -133,7 +133,6 @@ class Join:
         self.estCost = self.estimateCost()
         self.estCostCumulative = self.estimateCostCumulative()
 
-
     def __iter__(self):
         if self.withDict:
             for lb in self.left:
