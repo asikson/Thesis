@@ -120,6 +120,18 @@ class Join:
         self.fk = fk if self.withDict else None
         self.kind = getParam("joinKind")
 
+        for p in self.predicates:
+            p.orderRightByTable(self.right.tablename)
+        self.fieldsRight = list(map(
+            lambda p: p.right, self.predicates))
+        self.fieldsLeft = list(map(
+            lambda p: p.left, self.predicates))
+        self.rightIndex = idx.checkIfIndexExists(
+            self.right.tablename, 
+            list(map(
+                lambda f: f.name,
+                self.fieldsRight)))
+
         self.cost = 0
         self.costCumulative = 0
 
@@ -150,10 +162,14 @@ class Join:
             if self.passBuffer != []:
                 yield self.passBuffer
         else:
-            if self.kind == 'hash':
-                it = self.hashJoin()
-            elif self.kind == 'index':
+            if self.kind == 'index' \
+                or self.rightIndex:
                 it = self.indexJoin()
+            elif self.kind == 'hash':
+                it = self.hashJoin()
+            else:
+                assert(False), 'Unknown join kind'
+
             for rec in it:
                 self.passBuffer.append(rec)
                 if len(self.passBuffer) == self.passBufferMaxSize:
@@ -165,15 +181,10 @@ class Join:
         print(self.costInfo())
 
     def hashJoin(self):
-        for p in self.predicates:
-            p.orderRightByTable(self.right.tablename)
-        fieldsLeft = list(map(
-            lambda p: p.left, self.predicates))
-
         for lb in self.left:
             for l in lb:
                 self.cost += 1
-                k = l.valuesForFields(fieldsLeft)
+                k = l.valuesForFields(self.fieldsLeft)
                 if k in self.hashBuffer.keys():
                     self.hashBuffer[k].append(l)
                 else:
@@ -187,46 +198,41 @@ class Join:
                 yield rec
 
     def iterRight(self):
-        fieldsRight = list(map(
-            lambda p: p.right, self.predicates))
-
         for rb in self.right:
             for r in rb:
                 self.cost += 1
-                k = r.valuesForFields(fieldsRight)
+                k = r.valuesForFields(self.fieldsRight)
                 if k in self.hashBuffer.keys():
                     for v in self.hashBuffer[k]:
                         newRow = v.copy().concat(r)
                         yield newRow
 
     def indexJoin(self):
-        for p in self.predicates:
-            p.orderRightByTable(self.right.tablename)
-        fieldsRight = list(map(
-            lambda p: p.right, self.predicates))
-        fieldsLeft = list(map(
-            lambda p: p.left, self.predicates))
+        names2Index = list(map(lambda f: f.name, self.fieldsRight))
+        if not self.rightIndex:
+            index = idx.Index(self.right.tablename, names2Index)
+            self.rightIndex = index.filename
+            self.cost += self.right.estSize
+        else:
+            print('Found index {0}!'.format(self.rightIndex))
 
-        names2Index = list(map(
-            lambda f: f.name,
-            fieldsRight))
-        rightIdx = idx.Index(self.right.tablename,
-            names2Index)
-        self.cost += self.right.estSize
-        idxPlugin = dbp.DbPlugin(rightIdx.filename)
-        idxPlugin.open()
+        self.predicates += self.right.predicates
         self.right = ReadPkDict(Table(self.right.tablename, None))
+        idxPlugin = dbp.DbPlugin(self.rightIndex)
+        idxPlugin.open()
 
         for lb in self.left:
             for l in lb:
                 self.cost += 1
-                k = l.valuesForFields(fieldsLeft)
+                k = l.valuesForFields(self.fieldsLeft)
                 pks = idxPlugin.getValuesByIndexKey(k)
-                for pk in pks:
-                    r = self.right.get(pk)
-                    if r != -1:
-                        newRow = l.copy().concat(r)
-                        yield newRow
+                if pks != -1:
+                    for pk in pks:
+                        r = self.right.get(pk)
+                        if r != -1:
+                            newRow = l.copy().concat(r)
+                            if newRow.select(self.predicates):
+                                yield newRow
         idxPlugin.close()
 
     # costs
@@ -243,7 +249,7 @@ class Join:
             return self.estRedFactor * self.left.estSize * self.right.estSize
 
     def estimateCost(self):
-        if self.withDict:
+        if self.withDict or self.rightIndex:
             return self.left.estSize
         else:
             if self.kind == "hash":
@@ -254,7 +260,7 @@ class Join:
                 return self.right.estSize + self.left.estSize
 
     def estimateCostCumulative(self):
-        if self.withDict or self.kind == 'index':
+        if self.withDict or self.rightIndex or self.kind == 'index':
             return self.left.estCostCumulative + self.estCost
         else:
             if self.kind == 'hash':
@@ -265,11 +271,19 @@ class Join:
 
     def costInfo(self):
         return 'Cost of {0} joining {1}: {2} (est. cost: {3} with est. red. {4})'.format(
-            '' if self.withDict else self.kind,
+            self.nameOfJoin(),
             self.right.tablename,
             '{:.3f}'.format(self.cost),
             '{:.3f}'.format(self.estCost),
             '{:.3f}'.format(self.estRedFactor))
+
+    def nameOfJoin(self):
+        if self.rightIndex:
+            return '(by index)'
+        elif self.withDict:
+            return ''
+        else:
+            return self.kind
 
     def sumUpCost(self):
         self.costCumulative += self.left.costCumulative \

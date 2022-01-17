@@ -1,0 +1,6 @@
+{
+	"passBufferSize": 10000,
+	"readBufferSize": 2000000,
+	"hashBufferSize": 1000000,
+	"joinKind": "hash"
+}

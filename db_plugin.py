@@ -60,6 +60,9 @@ class DbPlugin:
         encodedKey = self.encodeKey(self.encodeValues(keys))
         values = self.data.get(encodedKey)
 
+        if values is None:
+            return -1
+
         return self.decodeValues(values)
 
     def open(self):

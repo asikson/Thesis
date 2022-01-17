@@ -1,5 +1,6 @@
 import algebra as ra
 import struct_plugin as sp
+from index import checkIfIndexExists
 
 class Planner:
     def __init__(self, sqlOutput):
@@ -40,8 +41,15 @@ class Planner:
                     return Plan(ra.Join(read2, read1, predsForJoin, f2),
                         fieldsLeft, predsLeft, tablesLeft)
             
-            return Plan(ra.Join(read1, read2, commonPreds, None),
+            fields1 = list(map(
+                lambda p: p.right.name,
+                commonPreds))
+            if checkIfIndexExists(table1.name, fields1):
+                return Plan(ra.Join(read2, read1, commonPreds, None),
                 fieldsLeft, predsLeft, tablesLeft)
+            else:
+                return Plan(ra.Join(read1, read2, commonPreds, None),
+                    fieldsLeft, predsLeft, tablesLeft)
     
     def pass2(self):
         self.plans = [self.twoRelationPlan(p[0], p[1])

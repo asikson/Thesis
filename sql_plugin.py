@@ -117,7 +117,7 @@ def comparison2Predicate(tokens):
     return sqlout.formatPredicate(left, right, op)
 
 def checkOperator(op):
-    return op in ['=', '<', '>', '!=', '<=', ">="]
+    return op in ['=', '<', '>', '!=', '<=', '>=']
 
 def translateAliases(fields, tables, predicates):
     aliasDict = dict()

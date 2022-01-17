@@ -1,8 +1,5 @@
-create index name on cities (city_name)
+create index common_emp on dept_manager (emp_id)
 
-create index prof on employees (age, gender)
-
-select e.name, e.surname, d.dept_name
-from employees e, dept_manager dm, departments d
-where e.emp_id = dm.emp_id
-and dm.dept_id = d.dept_id
+select *
+from dept_manager dm, dept_emp de
+where dm.emp_id = de.emp_id

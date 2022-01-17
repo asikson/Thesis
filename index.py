@@ -18,9 +18,7 @@ class Index:
                 self.tablename,
                 self.fields2Name())
         else:
-            return '{0}idx_{1}'.format(
-                self.tablename,
-                indexName)
+            return indexName
 
     def fields2Name(self):
         return '_'.join(self.fields)
