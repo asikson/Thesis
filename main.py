@@ -9,12 +9,6 @@ if __name__ == '__main__':
     queries = sqlp.getQueries()
     statements = [sqlp.formatAndParse(q)
         for q in queries]
-
-    '''
-    for s in statements:
-        s._pprint_tree()
-    '''
-    
     outputs = list(map(
         lambda s: sqlp.evaluateStatement(s.tokens),
         statements))
@@ -26,14 +20,25 @@ if __name__ == '__main__':
             outputs))
         print('Preparing stats...')
         ms.prepareStats(toStat)
-        print()
+    else:
+        print('Warning - stats are off!')
+    print()
 
-    for out in outputs:
+    alternative = getParam("alternativePlans")
+    alternative = (alternative == "on")
+    num = getParam("numOfAlternative")
+
+    for s, out in zip(statements, outputs):
+        print('SQL: ', s)
         if isinstance(out, SqlOutput):
             planner = pl.Planner(out)
-            planner.printBest()
             best = planner.getBest()
+            planner.printBest()
             pl.printResult(best)
+
+            if alternative:
+                planner.printAlternative(num)
+
         elif isinstance(out, idx.Index) \
             and not idx.checkIfIndexExists(out.tablename, out.fields):
             
@@ -42,4 +47,4 @@ if __name__ == '__main__':
                 out.filename,
                 out.tablename,
                 ', '.join(out.fields)))
-            
+        print()

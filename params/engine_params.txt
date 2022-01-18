@@ -2,5 +2,9 @@
 	"passBufferSize": 10000,
 	"readBufferSize": 2000000,
 	"hashBufferSize": 1000000,
-	"joinKind": "hash"
+	"joinKind": "hash",
+	"stats": "on",
+	"alternativePlans": "off",
+	"numOfAlternative": 2,
+	"printResult": "off"
 }

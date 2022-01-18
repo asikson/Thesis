@@ -72,6 +72,7 @@ class Statistics:
                 self.mins[f] = inf
                 self.maxes[f] = -1 * inf
 
+        self.plugin.open()
         for rec in self.plugin.tableIterator():
             self.tablesize += 1
             values = self.filterValues(rec, fields)
@@ -233,7 +234,7 @@ def getMinMax(tablename, fieldname):
     return stat[keyMin], stat[keyMax]
 
 def getHistFactorForField(tablename, fieldname, value):
-    min, max = getMinMax(tablename)
+    min, max = getMinMax(tablename, fieldname)
     if value < min or value > max:
         return 0
     stat = getStatDict(tablename)
@@ -243,8 +244,8 @@ def getHistFactorForField(tablename, fieldname, value):
         hist = getHistDict(tablename, fieldname)
         for k, v in hist.items():
             min, max = k
-            if value < max:
-                return v / (max - min)
+            if value >= min and value < max:
+                return v / (max - min) / getTablesize(tablename)
 
 def countHistSmaller(tablename, fieldname, value):
     sum = 0

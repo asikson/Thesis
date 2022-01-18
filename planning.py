@@ -77,6 +77,12 @@ class Planner:
     def printBest(self):
         self.getBest().printPlan()
 
+    def printAlternative(self, num):
+        for i in range(1, min(num + 1, len(self.plans))):
+            print('Alternative plan no {0}:'.format(i))
+            self.plans[i].printPlan()
+            print()
+
 
 class Plan:
     def __init__(self, acc, fields, predicates, tables):
@@ -133,7 +139,7 @@ class Plan:
 
     def printPlan(self):
         print('PLAN:\n{0}'.format(self.acc))
-        print('COSTS:\nEstimated cost: {0}'.format(
+        print('Estimated cost: {0}'.format(
             '{:.3f}'.format(self.getEstCost())))
 
 

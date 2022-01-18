@@ -66,7 +66,7 @@ def evaluateStatement(tokens):
 
 def getFields(token):
     if tools.isIdentifier(token):
-        return tools.getNamesFromIdentifier(token)
+        return [tools.getNamesFromIdentifier(token)]
     elif tools.isIdentifierList(token):
         return tools.getNamesFromIdentifierList(token)
     elif tools.isWildcard(token):

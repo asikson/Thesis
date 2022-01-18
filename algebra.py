@@ -36,7 +36,7 @@ class Projection:
         if self.passBuffer != []:
             yield self.passBuffer
         self.sumUpCost() 
-        print(self.costInfo())
+        #print(self.costInfo())
 
 
     # costs
@@ -88,7 +88,7 @@ class Selection:
         if self.passBuffer != []:
             yield self.passBuffer
         self.sumUpCost()
-        print(self.costInfo())
+        #print(self.costInfo())
 
 
     # costs
@@ -117,6 +117,7 @@ class Join:
         self.left = left
         self.right = right
         self.predicates = predicates
+        self.originalPreds = predicates
         self.withDict = isinstance(self.right, ReadPkDict)
         self.fk = fk if self.withDict else None
         self.kind = getParam("joinKind")
@@ -176,7 +177,7 @@ class Join:
             if self.passBuffer != []:
                 yield self.passBuffer
         self.sumUpCost()
-        print(self.costInfo())
+        #print(self.costInfo())
 
     def hashJoin(self):
         for lb in self.left:
@@ -292,14 +293,16 @@ class Join:
         result = '{0}\n join {1} on {2}'.format(
             self.left.__str__(),
             self.right.__str__(),
-            self.predsToStr())
+            self.predsToStr(self.originalPreds))
         if self.fk is not None:
             result += ' (by fk: {0})'.format(self.fk.__str__())
+        if self.rightIndex:
+            result += ' using index ' + self.rightIndex
         
         return result
 
-    def predsToStr(self):
-        return ', '.join(list(map(str, self.predicates)))
+    def predsToStr(self, predicates):
+        return ', '.join(list(map(str, predicates)))
 
     def preparePredicates(self):
         for p in self.predicates:
@@ -351,7 +354,7 @@ class CrossProduct:
         if self.passBuffer != []:
             yield self.passBuffer
         self.sumUpCost()
-        print(self.costInfo())
+        #print(self.costInfo())
 
 
     #costs
@@ -423,7 +426,7 @@ class ReadWithSelection:
             self.readBuffer = []
 
         self.sumUpCost()
-        print(self.costInfo())
+        #print(self.costInfo())
 
 
     # costs

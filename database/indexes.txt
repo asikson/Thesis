@@ -1,0 +1,1 @@
+{"table": "dept_emp", "name": "employee_idx", "f0": "emp_id"}

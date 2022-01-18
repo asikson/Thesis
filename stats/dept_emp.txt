@@ -1,0 +1,1 @@
+{"tablesize": 100000, "emp_id.min": 1, "dept_id.min": 1, "emp_id.max": 100000, "dept_id.max": 1000, "emp_id.diff": 100000, "dept_id.diff": 1000, "emp_id.uniform": "F", "dept_id.uniform": "T"}

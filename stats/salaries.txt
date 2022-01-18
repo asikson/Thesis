@@ -1,0 +1,1 @@
+{"tablesize": 100000, "emp_id.min": 1, "salary.min": 3500, "emp_id.max": 100000, "salary.max": 19999, "emp_id.diff": 100000, "salary.diff": 16465, "emp_id.uniform": "F", "salary.uniform": "T"}

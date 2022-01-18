@@ -6,14 +6,14 @@
 	"lastNameSamplesFile": "samples/last_names.txt",
 	"minAge": 20,
 	"maxAge": 80,
-	"ageDist": "uniform",
-	"femalePercent": 50,
+	"ageDist": "normal",
+	"femalePercent": 40,
 
 	"numOfDept": 1000,
 	"deptNameSamplesFile": "samples/plant_names.txt",
 	"deptNameDist": "uniform",
 
-	"numOfCities": 10000,
+	"numOfCities": 100,
 	"cityNameSamplesFile": "samples/cities.txt",
 	"cityNameDist": "uniform",
 	
@@ -21,5 +21,5 @@
 
 	"minSalary": 3500,
 	"maxSalary": 20000,
-	"salaryDist": "normal"
+	"salaryDist": "uniform"
 }

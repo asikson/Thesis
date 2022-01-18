@@ -1,0 +1,1 @@
+{"tablesize": 100, "city_id.min": 1, "city_id.max": 100, "city_id.diff": 100}

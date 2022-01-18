@@ -1,5 +1,49 @@
-create index common_emp on dept_manager (emp_id)
+select d.dept_name
+from dept_emp de, dept_manager dm, departments d
+where de.emp_id = dm.emp_id 
+and de.dept_id = d.dept_id
+
+select d.dept_name, e.last_name
+from departments d, dept_manager dm, employees e, dept_emp de
+where d.dept_id = dm.dept_id
+and dm.emp_id = e.emp_id
+and e.emp_id = de.emp_id
+and d.dept_id = de.dept_id
+
+select d.dept_name, e.last_name
+from departments d, dept_manager dm, employees e
+where d.dept_id = dm.dept_id
+and dm.emp_id = e.emp_id
+where e.age > 60
+and e.gender = M
+
+select e.first_name, e.last_name, s.salary
+from employees e, salaries s
+where s.emp_id = e.emp_id
+and e.age = 40
+
+select e.last_name, d.dept_name, c.city_name, s.salary
+from employees e, departments d, dept_emp de, salaries s, cities c
+where e.emp_id = de.emp_id
+and d.dept_id = de.dept_id 
+and s.emp_id = e.emp_id
+and d.city_id = c.city_id 
+where s.salary > 18000
 
 select *
-from dept_manager dm, dept_emp de
-where dm.emp_id = de.emp_id
+from dept_emp de, dept_manager dm
+where de.emp_id = dm.emp_id 
+
+create index employee_idx on dept_emp (emp_id)
+
+select e.last_name, d.dept_name, c.city_name, s.salary
+from employees e, departments d, dept_emp de, salaries s, cities c
+where e.emp_id = de.emp_id
+and d.dept_id = de.dept_id 
+and s.emp_id = e.emp_id
+and d.city_id = c.city_id
+where s.salary > 18000
+
+select *
+from dept_emp de, dept_manager dm
+where de.emp_id = dm.emp_id 

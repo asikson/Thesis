@@ -1,0 +1,1 @@
+{"tablesize": 1000, "dept_id.min": 1, "city_id.min": 1, "dept_id.max": 1000, "city_id.max": 100, "dept_id.diff": 1000, "city_id.diff": 100, "city_id.uniform": "T"}
