@@ -3,6 +3,7 @@ import sql_plugin as sqlp
 from sql_output import SqlOutput
 import mystatistics as ms
 import planning as pl
+from algebra import getParam
 
 if __name__ == '__main__':
     queries = sqlp.getQueries()
@@ -18,13 +19,14 @@ if __name__ == '__main__':
         lambda s: sqlp.evaluateStatement(s.tokens),
         statements))
 
-    # statistics
-    toStat = list(filter(
-        lambda o: isinstance(o, SqlOutput),
-        outputs))
-    print('Preparing stats...')
-    ms.prepareStats(toStat)
-    print()
+    if getParam("stats") == "on":
+        # statistics
+        toStat = list(filter(
+            lambda o: isinstance(o, SqlOutput),
+            outputs))
+        print('Preparing stats...')
+        ms.prepareStats(toStat)
+        print()
 
     for out in outputs:
         if isinstance(out, SqlOutput):

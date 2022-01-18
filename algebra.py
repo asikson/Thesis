@@ -46,6 +46,7 @@ class Projection:
             '{:.3f}'.format(self.cost),
             '{:.3f}'.format(self.estCost))
 
+
     def sumUpCost(self):
         self.costCumulative += self.data.costCumulative + self.cost
 
@@ -120,12 +121,10 @@ class Join:
         self.fk = fk if self.withDict else None
         self.kind = getParam("joinKind")
 
-        for p in self.predicates:
-            p.orderRightByTable(self.right.tablename)
-        self.fieldsRight = list(map(
-            lambda p: p.right, self.predicates))
-        self.fieldsLeft = list(map(
-            lambda p: p.left, self.predicates))
+        self.estRedFactor = self.estimateRedFactor()
+        self.estSize = self.estimateSize()
+
+        self.fieldsLeft, self.fieldsRight = self.preparePredicates()
         self.rightIndex = idx.checkIfIndexExists(
             self.right.tablename, 
             list(map(
@@ -140,10 +139,9 @@ class Join:
         self.passBuffer = []
         self.passBufferMaxSize = getParam("passBufferSize")
 
-        self.estRedFactor = self.estimateRedFactor()
-        self.estSize = self.estimateSize()
         self.estCost = self.estimateCost()
         self.estCostCumulative = self.estimateCostCumulative()
+
 
     def __iter__(self):
         if self.withDict:
@@ -303,6 +301,24 @@ class Join:
     def predsToStr(self):
         return ', '.join(list(map(str, self.predicates)))
 
+    def preparePredicates(self):
+        for p in self.predicates:
+            p.orderRightByTable(self.right.tablename)
+        toSplit = list(filter(
+            lambda p: not p.withValue,
+            self.predicates))
+
+        fieldsRight = list(map(
+            lambda p: p.right, toSplit))
+        fieldsLeft = list(map(
+            lambda p: p.left, toSplit))
+
+        self.predicates = list(filter(
+            lambda p: p.withValue,
+            self.predicates))
+
+        return fieldsLeft, fieldsRight
+
 
 class CrossProduct:
     def __init__(self, left, right):
@@ -359,6 +375,7 @@ class ReadWithSelection:
     def __init__(self, table, predicates):
         self.tablename = table.name
         self.plugin = dbp.DbPlugin(self.tablename)
+        self.plugin.open()
         self.predicates = predicates
 
         self.cost = 0

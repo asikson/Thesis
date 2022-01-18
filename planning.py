@@ -146,6 +146,7 @@ def printResult(plan):
     print('Cost: {0}'.format(
         '{:.3f}'.format(plan.getCost())))
     print('Number of records: ', numOfRecords)
+    print()
 
 
 # tools

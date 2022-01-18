@@ -46,9 +46,8 @@ class Predicate:
                 self.right.name
 
     def orderRightByTable(self, tablename):
-        if self.withValue:
-            return -1
-        elif self.right.tablename != tablename:
+        if not self.withValue \
+            and self.right.tablename != tablename:
             temp = self.left
             self.left = self.right
             self.right = temp

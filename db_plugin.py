@@ -13,7 +13,6 @@ class DbPlugin:
         self.close()
 
     def tableIterator(self):
-        self.open()
         cursor = self.data.cursor()
 
         rec = cursor.first()

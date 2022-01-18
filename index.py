@@ -32,6 +32,7 @@ class Index:
     def indexStream(self):
         index = dict()
         tablePlugin = dbp.DbPlugin(self.tablename)
+        tablePlugin.open()
         for rec in tablePlugin.tableIterator():
             pk = tablePlugin.keyFromPair(rec)
             vals4Key = tuple(self.filterValues(rec, self.fields))
