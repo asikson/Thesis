@@ -90,6 +90,7 @@ class Statistics:
                         self.maxes[f] = v 
                     elif v < self.mins[f]:
                         self.mins[f] = v
+        self.plugin.close()
 
         for f, ls in valuesForHist.items():
             self.histograms[f] = self.createHistogram(f, ls)

@@ -19,7 +19,6 @@ class DbPlugin:
         while rec:
             yield rec
             rec = cursor.next()
-        self.close()
 
     def printTable(self):
         for rec in self.tableIterator():
