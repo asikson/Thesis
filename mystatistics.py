@@ -3,6 +3,7 @@ import struct_plugin as sp
 from math import inf
 from scipy.stats import chisquare
 from json import load, dumps
+from sql_output import Predicate
 
 def prepareStats(outputs):
         toStat = dict()
@@ -312,6 +313,9 @@ def reductionFactor(predicate):
                     return getHistFactorForField(tablename, field, value)
                 else:
                     return - 1
+        elif op == '!=':
+            opposite = Predicate(predicate.left, predicate.right, '=')
+            return 1 - reductionFactor(opposite)
         # inequalities
         else:
             return getInequalityFactor(tablename, field, val, op)

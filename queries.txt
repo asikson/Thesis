@@ -15,7 +15,7 @@ from departments d, dept_manager dm, employees e
 where d.dept_id = dm.dept_id
 and dm.emp_id = e.emp_id
 where e.age > 60
-and e.gender = M
+and e.gender != M
 
 select e.first_name, e.last_name, s.salary
 from employees e, salaries s
