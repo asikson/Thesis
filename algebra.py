@@ -151,6 +151,7 @@ class Join:
                     self.cost += 1
                     k = l.valueForField(self.fk)
                     r = self.right.get(k)
+                    self.cost += self.right.getCost
                     if r != -1:
                         newRow = l.copy().concat(r)
                         if newRow.select(self.predicates):
@@ -228,6 +229,7 @@ class Join:
                 if pks != -1:
                     for pk in pks:
                         r = self.right.get(pk)
+                        self.cost += self.right.getCost
                         if r != -1:
                             newRow = l.copy().concat(r)
                             if newRow.select(self.predicates):
@@ -249,7 +251,7 @@ class Join:
 
     def estimateCost(self):
         if self.withDict or self.rightIndex:
-            return self.left.estSize
+            return self.left.estSize * (1 + getParam("getByKeyCost"))
         else:
             if self.kind == "hash":
                 return self.left.estSize \
@@ -465,6 +467,7 @@ class ReadPkDict:
 
         self.cost = 0
         self.costCumulative = 0
+        self.getCost = getParam("getByKeyCost")
 
         self.estSize = 0
         self.estCost = 0

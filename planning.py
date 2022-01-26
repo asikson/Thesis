@@ -1,6 +1,7 @@
 import algebra as ra
 import struct_plugin as sp
 from index import checkIfIndexExists
+from mystatistics import getTablesize
 
 class Planner:
     def __init__(self, sqlOutput):
@@ -44,7 +45,8 @@ class Planner:
             fields1 = list(map(
                 lambda p: p.right.name,
                 commonPreds))
-            if checkIfIndexExists(table1.name, fields1):
+            if checkIfIndexExists(table1.name, fields1) \
+                or getTablesize(table2.name) < getTablesize(table1.name):
                 return Plan(ra.Join(read2, read1, commonPreds, None),
                 fieldsLeft, predsLeft, tablesLeft)
             else:
