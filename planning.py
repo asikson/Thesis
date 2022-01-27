@@ -145,11 +145,12 @@ class Plan:
             '{:.3f}'.format(self.getEstCost())))
 
 
-def printResult(plan):
+def printResult(plan, withRec):
     numOfRecords = 0
     for buffer in plan.acc:
         for rec in buffer:
-            #print(rec)
+            if withRec:
+                print(rec)
             numOfRecords += 1
     print('Cost: {0}'.format(
         '{:.3f}'.format(plan.getCost())))

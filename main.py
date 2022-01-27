@@ -21,12 +21,13 @@ if __name__ == '__main__':
         print('Preparing stats...')
         ms.prepareStats(toStat)
     else:
-        print('Warning - stats are off!')
+        print('Warning - statistics are off!')
     print()
 
     alternative = getParam("alternativePlans")
     alternative = (alternative == "on")
     num = getParam("numOfAlternative")
+    recPrint = getParam("printResult") == 'on'
 
     for s, out in zip(statements, outputs):
         print('SQL: ', s)
@@ -34,7 +35,7 @@ if __name__ == '__main__':
             planner = pl.Planner(out)
             best = planner.getBest()
             planner.printBest()
-            pl.printResult(best)
+            pl.printResult(best, recPrint)
 
             if alternative:
                 planner.printAlternative(num)

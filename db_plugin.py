@@ -1,4 +1,4 @@
-from bsddb3 import db
+from berkeleydb import db
 
 class DbPlugin:
     def __init__(self, tablename):
@@ -29,7 +29,7 @@ class DbPlugin:
 
     def encodeValues(self, values):
         values = list(map(str, values))
-        return '\0'.join(values)
+        return bytes('\0'.join(values), 'utf-8')
 
     def decodeKey(self, key):
         return key.decode('utf-8')
