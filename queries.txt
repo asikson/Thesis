@@ -1,7 +1,7 @@
-select d.dept_name
-from dept_emp de, dept_manager dm, departments d
-where de.emp_id = dm.emp_id 
-and de.dept_id = d.dept_id
+select e.first_name, e.last_name, de.dept_id
+from dept_emp de, dept_manager dm, employees e
+where de.emp_id = e.emp_id
+and dm.emp_id = e.emp_id
 
 select d.dept_name, e.last_name
 from departments d, dept_manager dm, employees e, dept_emp de
@@ -10,12 +10,18 @@ and dm.emp_id = e.emp_id
 and e.emp_id = de.emp_id
 and d.dept_id = de.dept_id
 
-select d.dept_name, e.last_name
-from departments d, dept_manager dm, employees e
-where d.dept_id = dm.dept_id
-and dm.emp_id = e.emp_id
-where e.age > 60
-and e.gender != M
+select d.dept_name, e.last_name, s.salary
+from employees e, dept_emp de, departments d, salaries s
+where de.emp_id = e.emp_id
+and de.dept_id = d.dept_id
+and e.emp_id = s.emp_id
+
+select d.dept_name, e.last_name, s.salary
+from employees e, dept_emp de, departments d, salaries s
+where de.emp_id = e.emp_id
+and de.dept_id = d.dept_id
+and e.emp_id = s.emp_id
+and s.salary > 18000
 
 select e.first_name, e.last_name, s.salary
 from employees e, salaries s
