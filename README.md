@@ -32,3 +32,10 @@ Statistics parameters are in file *params/stats_params.txt*. It's possible to cl
 make clean_stats
 ```
 however then remember to have them turned on while running the program.
+
+## Tips
+To see the result of the query, set the *printResult* parameter in *params/engine_params.txt* to *on*.
+
+If the program is lacking memory, the buffers in *params/engine_params.txt* might need to be reduced.
+
+If the alternative query plans should be presented, set the *alternativePlans* in *params/engine_params.txt* to *on* and pass the number of alternative plans to *numOfAlternative*.
