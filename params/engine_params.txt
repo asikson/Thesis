@@ -4,7 +4,8 @@
 	"hashBufferSize": 1000000,
 	"joinKind": "hash",
 	"stats": "on",
-	"alternativePlans": "off",
-	"numOfAlternative": 2,
-	"printResult": "off"
+	"alternativePlans": "on",
+	"numOfAlternative": 5,
+	"printResult": "off",
+	"getByKeyCost": 1
 }

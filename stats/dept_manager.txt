@@ -1,1 +1,1 @@
-{"tablesize": 1000, "emp_id.min": 304, "dept_id.min": 1, "emp_id.max": 99883, "dept_id.max": 1000, "emp_id.diff": 997, "dept_id.diff": 1000, "emp_id.uniform": "F", "dept_id.uniform": "T"}
+{"tablesize": 1000, "emp_id.min": 81, "dept_id.min": 1, "emp_id.max": 99857, "dept_id.max": 1000, "emp_id.diff": 997, "dept_id.diff": 1000, "emp_id.uniform": "T", "dept_id.uniform": "T"}
