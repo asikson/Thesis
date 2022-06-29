@@ -1,5 +1,14 @@
 # Cost-based optimization of relational databases
 
+This repo is an implementation of a custom database engine in Python, using Berkeley DB to store data. It handles basic SQL queries. The program contains:
+- implementation of basic operators
+- data statistics storage
+- data generator
+- cost and result size estimating mechanism for each operator
+- different implementations of joins
+- join ordering algorithm
+- query execution planner
+
 ## Generating data
 To generate new database, some cleaning needs to be done:
 ```
